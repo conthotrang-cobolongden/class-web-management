@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface StudentRepository extends JpaRepository<Student, Long> {
@@ -57,5 +58,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
 
     Optional<Student> findByStudentCodeIgnoreCase(String studentCode);
+    List<Student> findByDobIn(Collection<LocalDate> dates);
+
     long countByEnrollmentDateBetween(LocalDate from, LocalDate to);
 }
