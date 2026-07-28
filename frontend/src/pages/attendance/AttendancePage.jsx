@@ -89,6 +89,7 @@ export default function AttendancePage() {
   const sessionsReqRef = useRef(0);
   const rosterReqRef = useRef(0);
   const noticeTimerRef = useRef();
+  const savedRowsRef = useRef([]);
 
   useEffect(() => () => clearTimeout(noticeTimerRef.current), []);
 
@@ -157,7 +158,9 @@ export default function AttendancePage() {
       const data = await api(`/sessions/${sessionId}/attendance`);
       if (reqId !== rosterReqRef.current) return;
       setSession(data.session);
-      setRows(data.items.map((it) => ({ ...it, note: it.note || '' })));
+      const nextRows = data.items.map((it) => ({ ...it, note: it.note || '' }));
+      savedRowsRef.current = nextRows.map(({ student_id, status, note }) => ({ student_id, status, note }));
+      setRows(nextRows);
     } catch (err) {
       if (reqId === rosterReqRef.current) setError(err.message);
     } finally {
@@ -168,8 +171,25 @@ export default function AttendancePage() {
   useEffect(() => {
     loadRoster();
   }, [loadRoster]);
+  const hasUnsavedChanges = rows.some((row) => {
+    const saved = savedRowsRef.current.find((item) => item.student_id === row.student_id);
+    return !saved || saved.status !== row.status || saved.note !== row.note;
+  });
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return undefined;
+    const handleBeforeUnload = (event) => event.preventDefault();
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  function confirmDiscardChanges() {
+    return !hasUnsavedChanges || window.confirm('Có thay đổi điểm danh chưa lưu. Bạn có muốn bỏ các thay đổi này?');
+  }
+
 
   function pickClass(id) {
+    if (!confirmDiscardChanges()) return;
     setClassId(id);
     setSessionId(null);
     setSession(null);
@@ -178,6 +198,7 @@ export default function AttendancePage() {
   }
 
   function pickSession(id) {
+    if (id !== sessionId && !confirmDiscardChanges()) return;
     setSessionId(id);
     setError('');
   }
@@ -448,6 +469,7 @@ export default function AttendancePage() {
               <div className="att-save-bar">
                 <span className="att-count">
                   Đã chọn <strong>{markedCount}/{rows.length}</strong> học sinh
+                  {hasUnsavedChanges && <span className="badge badge-warn">Chưa lưu</span>}
                   {markedCount < rows.length ? ' — HS chưa chọn sẽ không được lưu' : ''}
                 </span>
                 <button
