@@ -133,6 +133,13 @@ export default function GradesPage() {
 
   const pendingChanges = collectChanges();
   const changedCount = pendingChanges.length;
+  useEffect(() => {
+    if (changedCount === 0) return undefined;
+    const handleBeforeUnload = (event) => event.preventDefault();
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [changedCount]);
+
 
   function handleCellBlur(it, col) {
     const key = cellKey(it.student_id, col.id);

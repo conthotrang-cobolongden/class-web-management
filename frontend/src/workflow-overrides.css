@@ -1,0 +1,53 @@
+/* Task-specific patterns layered on the shared Warm Learning Studio system. */
+
+/* Attendance: quick selection, corrections, and an always-visible save action. */
+.att-pick-list{gap:12px}.att-pick{min-height:64px;padding:13px 16px;border-color:var(--color-gray-300)}
+.att-pick:hover{border-color:var(--color-forest-500)}.att-pick-active{border-color:var(--color-forest-600);background:var(--color-forest-100);box-shadow:inset 4px 0 var(--color-clay-500)}
+.att-pick-title{color:var(--ink);font-weight:700}.att-roster{gap:12px}.att-row{padding:14px;border-color:var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+.att-row:focus-within{border-color:var(--color-forest-500);box-shadow:0 0 0 3px rgba(33,99,84,.1)}
+.att-name{font-size:15.5px}.att-status-group{gap:8px}.att-status{min-height:var(--control-touch);border-color:var(--color-gray-300);border-radius:var(--radius-md);font-weight:650}
+.att-status:hover{border-color:var(--color-forest-500);background:var(--color-forest-100)}
+.att-status.on-present{background:var(--color-success);border-color:var(--color-success)}
+.att-status.on-late{background:var(--color-warning);border-color:var(--color-warning)}
+.att-status.on-absent{background:var(--color-danger);border-color:var(--color-danger)}
+.att-status.on-excused{background:var(--color-gray-600);border-color:var(--color-gray-600)}
+.att-save-bar{padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius-lg);background:rgba(255,254,251,.96);box-shadow:var(--shadow-md);backdrop-filter:blur(8px)}
+.att-save-bar .btn-primary{min-width:180px}.att-count strong{color:var(--color-forest-700)}
+
+/* Grade entry: keyboard-dense desktop grid and focused mobile horizontal workflow. */
+.grade-input{width:82px;min-height:38px;border-radius:9px;font-variant-numeric:tabular-nums;font-weight:650}
+.grade-input.changed{border-color:var(--color-clay-500);background:var(--color-clay-100);box-shadow:inset 0 -2px var(--color-clay-500)}
+.grade-input:focus{background:#fff;box-shadow:0 0 0 3px rgba(216,121,62,.2)}
+.grade-avg{color:var(--color-forest-700);font-variant-numeric:tabular-nums}
+
+/* Long forms and detail pages use consistent grouping and action rhythm. */
+form.card>h3,.card>.subhead:first-child{padding-bottom:14px;border-bottom:1px solid var(--line)}
+form.card>.row-gap:last-child,form.card>div:last-child{padding-top:4px}
+.tab-bar,.tabs{gap:6px;padding:5px;border:1px solid var(--line);border-radius:14px;background:rgba(255,254,251,.72)}
+.tab-bar .btn,.tab-btn{border:0;border-radius:10px;background:transparent;box-shadow:none}
+.tab-bar .btn-primary,.tab-btn.active{color:var(--color-forest-700);background:var(--color-clay-100);border-color:transparent}
+.summary-grid{gap:16px}.summary-grid .card{border-left:3px solid var(--color-clay-500)}
+.fee-row:hover{background:var(--color-forest-100)}.payments-row>td{background:#f3f1ea}.payments-row table{background:var(--panel);border-color:var(--line)}
+.quick-links{border-color:var(--line)}.class-grid{gap:16px}.class-grid .card{border-top:3px solid var(--color-forest-500)}
+
+@media (max-width:768px){
+ .att-pick{min-height:var(--control-touch);padding:12px}.att-pick>span:first-child{display:grid;gap:2px}
+ .att-filters{display:grid;grid-template-columns:1fr 1fr}.att-filters label{grid-column:span 1}.att-filters input[type=date]{max-width:none}
+ .att-status-group{grid-template-columns:repeat(2,1fr)}.att-status{min-height:52px}.att-note input{min-height:44px}
+ .att-save-bar{bottom:calc(var(--bn-h) + 8px + env(safe-area-inset-bottom));padding:10px 12px}.att-save-bar .btn-primary{min-width:0;min-height:var(--control-touch)}
+ .grade-input{width:70px;min-height:var(--control-touch);font-size:16px}.table-wrap:has(.grade-input){overscroll-behavior-inline:contain;scroll-snap-type:x proximity}
+ .table-wrap:has(.grade-input) table{min-width:max-content}.table-wrap:has(.grade-input) th:first-child,.table-wrap:has(.grade-input) td:first-child{position:sticky;left:0;z-index:3;min-width:144px;background:var(--panel);box-shadow:4px 0 8px rgba(28,41,37,.08)}
+ .table-wrap:has(.grade-input) th:first-child{z-index:4;background:#f3f1ea}.table-wrap:has(.grade-input) tbody tr:focus-within td{background:var(--color-clay-100)}
+ .tab-bar,.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tab-bar::-webkit-scrollbar,.tabs::-webkit-scrollbar{display:none}
+ form.card>.row-gap:last-child,form.card>div:last-child{display:grid;grid-template-columns:1fr}.report-filters .btn{width:100%}
+ .summary-grid{grid-template-columns:1fr 1fr;gap:10px}.summary-grid .card{padding:14px}.summary-num{font-size:23px}
+}
+
+@media (min-width:769px) and (max-width:1100px){
+ .att-row{grid-template-columns:minmax(150px,.8fr) minmax(360px,1.5fr)}.att-note{grid-column:1/-1}.att-filters{align-items:flex-end}
+}
+
+@media (min-width:1101px){
+ .att-row{grid-template-columns:minmax(190px,1fr) minmax(420px,1.7fr) minmax(180px,.9fr)}
+ .table-wrap:has(.grade-input){max-height:calc(100dvh - 230px)}.table-wrap:has(.grade-input) th{top:0}.table-wrap:has(.grade-input) td:first-child{font-weight:650;white-space:nowrap}
+}
