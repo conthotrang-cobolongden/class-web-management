@@ -181,6 +181,8 @@ public class StudentService {
         }
         s.setNote(emptyToNull(req.note()));
         students.save(s);
+        s.setStudentCode(StudentCodes.fromId(s.getId()));
+        students.save(s);
 
         if (target != null) {
             Enrollment e = new Enrollment();

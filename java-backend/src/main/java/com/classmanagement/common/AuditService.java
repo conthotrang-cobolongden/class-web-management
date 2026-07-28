@@ -25,12 +25,30 @@ public class AuditService {
                       Object oldValues, Object newValues, Long userId) {
         AuditLog log = new AuditLog();
         log.setTableName(tableName);
+        log.setCategory(categoryFor(tableName));
+        log.setDescription(tableName + (recordId == null ? "" : " #" + recordId));
         log.setRecordId(recordId);
         log.setAction(action);
         log.setOldValues(toJson(oldValues));
         log.setNewValues(toJson(newValues));
         log.setUserId(userId);
         auditLogs.save(log);
+    }
+
+    private static String categoryFor(String tableName) {
+        return switch (tableName) {
+            case "users" -> "users";
+            case "students", "enrollments" -> "students";
+            case "classes", "class_staff" -> "classes";
+            case "class_schedules", "sessions" -> "sessions";
+            case "attendance" -> "attendance";
+            case "grade_columns", "grades" -> "grades";
+            case "monthly_fees", "payments" -> "fees";
+            case "imports" -> "imports";
+            case "authentication" -> "authentication";
+            default -> throw new IllegalArgumentException(
+                    "Khong co nhom audit cho bang: " + tableName);
+        };
     }
 
     private String toJson(Object value) {

@@ -23,9 +23,15 @@ public class AuditLog {
     @Column(name = "table_name", nullable = false, length = 50)
     private String tableName;
 
-    @Column(name = "record_id", nullable = false)
+    @Column(name = "record_id")
     private Long recordId;
 
+
+    @Column(nullable = false, length = 30)
+    private String category;
+
+    @Column(length = 300)
+    private String description;
     // create / update / delete
     @Column(nullable = false, length = 20)
     private String action;
@@ -36,7 +42,7 @@ public class AuditLog {
     @Column(name = "new_values", length = Integer.MAX_VALUE)
     private String newValues;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(name = "created_at", nullable = false)
@@ -65,6 +71,22 @@ public class AuditLog {
 
     public void setRecordId(Long recordId) {
         this.recordId = recordId;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getAction() {

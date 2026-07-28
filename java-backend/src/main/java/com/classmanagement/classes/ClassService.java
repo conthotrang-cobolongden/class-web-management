@@ -333,7 +333,7 @@ public class ClassService {
         return open.stream()
                 .map(e -> {
                     Student s = byId.get(e.getStudentId());
-                    return new ClassStudentDto(s.getId(), s.getFullName(), s.getDob(), s.getGender(),
+                    return new ClassStudentDto(s.getId(), s.getStudentCode(), s.getFullName(), s.getDob(), s.getGender(),
                             s.getParentPhone(), s.getStatus(), e.getJoinedAt(), e.getCustomMonthlyFee());
                 })
                 .sorted(Comparator.comparing(ClassStudentDto::fullName)
