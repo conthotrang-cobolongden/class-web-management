@@ -80,7 +80,7 @@ public class GradeService {
 
     @Transactional
     public GradeColumnDto createColumn(User me, Long classId, CreateGradeColumnRequest req) {
-        classAccess.assertClassManager(me, classId);
+        classAccess.assertClassStaffOrAdmin(me, classId);
         requireClass(classId);
 
         BigDecimal weight = req.weight() == null ? BigDecimal.ONE : req.weight();
@@ -102,7 +102,7 @@ public class GradeService {
     @Transactional
     public GradeColumnDto updateColumn(User me, Long columnId, UpdateGradeColumnRequest req) {
         GradeColumn col = requireColumn(columnId);
-        classAccess.assertClassManager(me, col.getClassId());
+        classAccess.assertClassStaffOrAdmin(me, col.getClassId());
 
         Map<String, Object> oldValues = snapshot(col);
         boolean changed = false;
@@ -145,7 +145,7 @@ public class GradeService {
     @Transactional
     public void deleteColumn(User me, Long columnId) {
         GradeColumn col = requireColumn(columnId);
-        classAccess.assertClassManager(me, col.getClassId());
+        classAccess.assertClassStaffOrAdmin(me, col.getClassId());
 
         Map<String, Object> oldValues = snapshot(col);
         col.setDeleted(true);

@@ -15,6 +15,7 @@ public class ClassAccessService {
     public static final String MEMBER_DENIED = "Bạn không được gán vào lớp này";
     public static final String MANAGER_DENIED = "Chỉ Admin hoặc giáo viên chính của lớp được thực hiện thao tác này";
 
+    public static final String STAFF_DENIED = "Chỉ Admin hoặc nhân sự được phân công vào lớp được thực hiện thao tác này";
     private final ClassStaffRepository classStaff;
 
     public ClassAccessService(ClassStaffRepository classStaff) {
@@ -41,6 +42,14 @@ public class ClassAccessService {
             throw new ApiException(403, MEMBER_DENIED);
         }
     }
+    // Chan 403 neu khong phai admin/GV chinh/tro giang cua lop.
+    public void assertClassStaffOrAdmin(User user, Long classId) {
+        String role = classRole(user, classId);
+        if (!"admin".equals(role) && !"main".equals(role) && !"assistant".equals(role)) {
+            throw new ApiException(403, STAFF_DENIED);
+        }
+    }
+
 
     // Chan 403 neu khong phai admin/GV chinh cua lop
     public void assertClassManager(User user, Long classId) {
