@@ -23,6 +23,7 @@ import {
   fmtCompactMoney,
 } from '../charts/theme.js';
 import './home.css';
+import WeeklyTimetable from './home/WeeklyTimetable.jsx';
 
 const GRADES = [6, 7, 8, 9];
 
@@ -126,6 +127,8 @@ export default function HomePage() {
       </p>
 
       {error && <div className="alert">{error}</div>}
+
+      <WeeklyTimetable />
 
       {/* ===== Skeleton khi dang tai ===== */}
       {loading &&
