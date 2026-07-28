@@ -204,6 +204,18 @@ public class FeeService {
         payments.save(payment);
 
         String status = feeStatus.refreshFeeStatus(fee);
+        Map<String, Object> auditValues = new LinkedHashMap<>();
+        auditValues.put("monthly_fee_id", fee.getId());
+        auditValues.put("student_id", fee.getStudentId());
+        auditValues.put("class_id", fee.getClassId());
+        auditValues.put("fee_year", fee.getFeeYear());
+        auditValues.put("fee_month", fee.getFeeMonth());
+        auditValues.put("amount", payment.getAmount());
+        auditValues.put("method", payment.getMethod());
+        auditValues.put("paid_at", payment.getPaidAt());
+        auditValues.put("note", payment.getNote());
+        auditValues.put("fee_status", status);
+        auditService.audit("payments", payment.getId(), "create", null, auditValues, me.getId());
         return new CreatePaymentResponse(PaymentDto.from(payment, me.getFullName()), status);
     }
 

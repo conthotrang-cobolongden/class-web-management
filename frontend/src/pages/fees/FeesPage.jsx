@@ -2,6 +2,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
 import { useAuth } from '../../auth.jsx';
 import { FEE_STATUS_LABELS, PAYMENT_METHOD_LABELS, fmtDateTime, fmtMoney } from '../../format.js';
+import { summaryForRole } from '../../features/fees/feeSummary.js';
 import './fees.css';
 
 const PAGE_SIZE = 20;
@@ -32,6 +33,7 @@ function useIsMobile() {
 export default function FeesPage() {
   const { user: me } = useAuth();
   const isAdmin = me.role === 'admin';
+  const isAssistant = me.role === 'assistant';
   const isMobile = useIsMobile();
   const now = new Date();
 
@@ -276,15 +278,7 @@ export default function FeesPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const noClass = classesLoaded && !isAdmin && classes.length === 0;
 
-  // 3 o tong nhanh — tinh tren cac khoan cua TRANG hien tai
-  const pageDue = items.reduce((s, f) => s + Number(f.amount_due || 0), 0);
-  const pagePaid = items.reduce((s, f) => s + Number(f.paid_total || 0), 0);
-  const pageLeft = items.reduce(
-    (s, f) => s + Math.max(0, Number(f.amount_due || 0) - Number(f.paid_total || 0)),
-    0,
-  );
-  const owingCount = items.filter((f) => f.status !== 'paid').length;
-  const paidPct = pageDue > 0 ? Math.round((pagePaid / pageDue) * 100) : 0;
+  const feeSummary = summaryForRole(me.role, items);
   const statNumCls = loading ? 'stat-num skeleton' : 'stat-num';
 
   // Form dung chung cho ca card (desktop) va sheet (mobile)
@@ -442,24 +436,33 @@ export default function FeesPage() {
             </select>
           </div>
 
-          {/* 3 o tong nhanh cua trang hien tai */}
-          <div className="stat-grid fee-stats">
-            <div className="card">
-              <div className="stat-label">Tổng phải thu</div>
-              <div className={statNumCls}>{fmtMoney(pageDue)}</div>
-              <div className="stat-sub">{items.length} khoản · trang hiện tại</div>
+          {isAssistant ? (
+            <div className="stat-grid fee-stats">
+              <div className="card">
+                <div className="stat-label">Học sinh chưa đóng</div>
+                <div className={statNumCls}>{feeSummary.owingCount}</div>
+                <div className="stat-sub">Trong trang hiện tại</div>
+              </div>
             </div>
-            <div className="card">
-              <div className="stat-label">Đã thu</div>
-              <div className={statNumCls}>{fmtMoney(pagePaid)}</div>
-              <div className="stat-sub">{paidPct}% tổng phải thu</div>
+          ) : (
+            <div className="stat-grid fee-stats">
+              <div className="card">
+                <div className="stat-label">Tổng phải thu</div>
+                <div className={statNumCls}>{fmtMoney(feeSummary.due)}</div>
+                <div className="stat-sub">{items.length} khoản · trang hiện tại</div>
+              </div>
+              <div className="card">
+                <div className="stat-label">Đã thu</div>
+                <div className={statNumCls}>{fmtMoney(feeSummary.paid)}</div>
+                <div className="stat-sub">{feeSummary.paidPct}% tổng phải thu</div>
+              </div>
+              <div className="card">
+                <div className="stat-label">Còn thiếu</div>
+                <div className={statNumCls}>{fmtMoney(feeSummary.left)}</div>
+                <div className="stat-sub">{feeSummary.owingCount} khoản chưa đóng đủ</div>
+              </div>
             </div>
-            <div className="card">
-              <div className="stat-label">Còn thiếu</div>
-              <div className={statNumCls}>{fmtMoney(pageLeft)}</div>
-              <div className="stat-sub">{owingCount} khoản chưa đóng đủ</div>
-            </div>
-          </div>
+          )}
 
           <div className="table-wrap table-cards">
             <table>
