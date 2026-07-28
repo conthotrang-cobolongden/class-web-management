@@ -313,6 +313,10 @@ export default function StudentDetailPage() {
         <h3>Hồ sơ</h3>
         <div className="grid-2">
           <div>
+            <div className="muted">Mã học sinh</div>
+            <div><strong>{student.student_code}</strong></div>
+          </div>
+          <div>
             <div className="muted">Ngày sinh</div>
             <div>{fmtDate(student.dob)}</div>
           </div>
