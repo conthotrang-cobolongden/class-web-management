@@ -8,12 +8,17 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface ClassSessionRepository extends JpaRepository<ClassSession, Long> {
 
     List<ClassSession> findByClassIdAndSessionDateBetween(Long classId, LocalDate from, LocalDate to);
 
+    List<ClassSession> findBySessionDateBetween(LocalDate from, LocalDate to);
+
+    List<ClassSession> findByClassIdInAndSessionDateBetween(
+            Collection<Long> classIds, LocalDate from, LocalDate to);
     // FR-4.4: cac buoi scheduled trong range de tinh chuyen can
     List<ClassSession> findByClassIdAndStatusAndSessionDateBetween(Long classId, String status,
                                                                    LocalDate from, LocalDate to);

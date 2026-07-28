@@ -13,6 +13,7 @@ import com.classmanagement.domain.SchoolClassRepository;
 import com.classmanagement.sessions.dto.CancelSessionRequest;
 import com.classmanagement.sessions.dto.CreateSessionRequest;
 import com.classmanagement.sessions.dto.SessionDto;
+import com.classmanagement.sessions.dto.WeeklySessionDto;
 import com.classmanagement.sessions.dto.UpdateSessionRequest;
 import com.classmanagement.user.User;
 import org.springframework.data.domain.Page;
@@ -22,9 +23,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +80,37 @@ public class SessionService {
                         counts.getOrDefault(s.getId(), 0L)))
                 .toList();
         return new PageResponse<>(items, result.getTotalElements(), p.page(), p.pageSize());
+    }
+
+    public List<WeeklySessionDto> week(User me, String fromParam, String toParam) {
+        LocalDate from = parseDate(fromParam, "from");
+        LocalDate to = parseDate(toParam, "to");
+        if (from.getDayOfWeek() != DayOfWeek.MONDAY
+                || !to.equals(from.plusDays(6))) {
+            throw new ApiException(400, "Khoảng lịch tuần phải từ thứ Hai đến Chủ nhật (đúng 7 ngày)");
+        }
+
+        List<Long> visibleClassIds = access.visibleClassIds(me);
+        List<ClassSession> content;
+        if (visibleClassIds == null) {
+            content = sessions.findBySessionDateBetween(from, to);
+        } else if (visibleClassIds.isEmpty()) {
+            return List.of();
+        } else {
+            content = sessions.findByClassIdInAndSessionDateBetween(visibleClassIds, from, to);
+        }
+
+        Map<Long, String> classNames = classNamesOf(content);
+        Map<Long, Long> counts = attendanceCountsOf(content);
+
+        return content.stream()
+                .sorted(Comparator.comparing(ClassSession::getSessionDate)
+                        .thenComparing(ClassSession::getStartTime)
+                        .thenComparing(ClassSession::getClassId)
+                        .thenComparing(ClassSession::getId))
+                .map(session -> WeeklySessionDto.from(session, classNames.get(session.getClassId()),
+                        counts.getOrDefault(session.getId(), 0L)))
+                .toList();
     }
 
     // POST /api/sessions — tao buoi bu/buoi le (FR-2.4), unique (class, date, start_time) -> 409

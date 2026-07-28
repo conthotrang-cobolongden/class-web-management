@@ -6,6 +6,7 @@ import com.classmanagement.common.Pagination;
 import com.classmanagement.sessions.dto.CancelSessionRequest;
 import com.classmanagement.sessions.dto.CreateSessionRequest;
 import com.classmanagement.sessions.dto.SessionDto;
+import com.classmanagement.sessions.dto.WeeklySessionDto;
 import com.classmanagement.sessions.dto.UpdateSessionRequest;
 import com.classmanagement.user.User;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.List;
 
 // Sessions — API.md muc 3; quyen chan trong service qua ClassAccessService (NFR-2)
 @RestController
@@ -47,6 +49,14 @@ public class SessionController {
                                          @AuthenticationPrincipal User me) {
         return sessionService.list(me, classId, from, to, status, Pagination.of(page, pageSize));
     }
+
+    @GetMapping("/week")
+    public List<WeeklySessionDto> week(@RequestParam String from,
+                                       @RequestParam String to,
+                                       @AuthenticationPrincipal User me) {
+        return sessionService.week(me, from, to);
+    }
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
