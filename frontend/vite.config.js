@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 // khong dinh CORS, deploy that chi can dat reverse proxy tuong tu.
 export default defineConfig({
   plugins: [react()],
+  base: '/class-web-management/',
   server: {
     port: 5173,
     proxy: {
