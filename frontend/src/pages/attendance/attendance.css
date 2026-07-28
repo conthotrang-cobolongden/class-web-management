@@ -1,0 +1,127 @@
+/* Trang diem danh — mobile-first (NFR-1: GV diem danh bang dien thoai).
+   Mau 4 nut trang thai khi chon lay DUNG STATUS cua src/charts/theme.js:
+   present=good, late=warning, absent=critical, excused=neutral — truyen vao
+   qua CSS variables --st-* gan o root cua AttendancePage.jsx (1 nguon mau). */
+
+/* ===== Buoc 1 + 2: the chon lop / chon buoi — cham to cho ngon cai ===== */
+.att-pick-list { display: flex; flex-direction: column; gap: 10px; }
+
+.att-pick {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+}
+
+.att-pick-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.att-pick-active:hover { background: var(--accent-soft); }
+.att-pick-today { border-color: var(--accent); }
+
+.att-pick-title { font-weight: 600; font-size: 15px; }
+.att-meta { font-size: 12px; color: var(--muted); font-weight: 400; }
+
+.badge-today { background: var(--accent-soft); color: var(--accent); }
+
+.att-filters { flex-wrap: wrap; row-gap: 10px; margin-bottom: 10px; }
+.att-filters input[type="date"] { max-width: 160px; }
+
+/* Skeleton khi dang tai (dung anim shimmer cua styles.css) */
+.att-skel { height: 56px; border-radius: var(--radius); }
+.att-skel-row { height: 150px; border-radius: var(--radius); }
+
+/* ===== Buoc 3: roster — moi HS 1 the co khoang tho ===== */
+.att-roster { display: flex; flex-direction: column; gap: 10px; }
+
+.att-row {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fade-in var(--speed) ease;
+}
+
+.att-row-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.att-name { font-weight: 600; font-size: 15px; }
+
+/* 4 nut trang thai: cao >=48px, bo goc 10px, luon co nhan chu */
+.att-status-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+.att-status {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  border-radius: 10px;
+  padding: 8px 4px;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background var(--speed) ease, border-color var(--speed) ease,
+              color var(--speed) ease, transform var(--speed) ease;
+}
+.att-status:active { transform: scale(0.97); }
+.att-status:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Mau nen active = STATUS (charts/theme.js), chu trang */
+.att-status.on-present { background: var(--st-present); border-color: var(--st-present); color: #fff; font-weight: 700; }
+.att-status.on-late    { background: var(--st-late);    border-color: var(--st-late);    color: #fff; font-weight: 700; }
+.att-status.on-absent  { background: var(--st-absent);  border-color: var(--st-absent);  color: #fff; font-weight: 700; }
+.att-status.on-excused { background: var(--st-excused); border-color: var(--st-excused); color: #fff; font-weight: 700; }
+
+.att-note input { width: 100%; }
+
+/* ===== Thanh luu — sticky, luon nhin thay khi cuon danh sach dai ===== */
+.att-save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40; /* duoi bottom nav (50) */
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  padding: 12px 0 4px;
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.att-count { font-size: 13.5px; color: var(--muted); }
+.att-count strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ===== Mobile: thanh luu noi tren bottom nav, ne tai tho iPhone ===== */
+@media (max-width: 768px) {
+  .att-save-bar {
+    bottom: calc(var(--bn-h) + 8px + env(safe-area-inset-bottom));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    box-shadow: var(--shadow-md);
+  }
+  .att-save-bar .btn-primary { flex: 1 1 100%; }
+}
+
+/* ===== Desktop: moi HS 1 hang ngang cho nhanh ===== */
+@media (min-width: 769px) {
+  .att-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 400px minmax(180px, 1fr);
+    gap: 14px;
+    align-items: center;
+  }
+  .att-row-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+}

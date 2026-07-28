@@ -1,0 +1,43 @@
+server:
+  port: ${PORT:4000}
+
+spring:
+  application:
+    name: class-management-backend
+
+  # API JSON dung snake_case (full_name, is_active...) — giu nguyen contract voi ban Node/React
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+  datasource:
+    # SQL Server local lang nghe port tinh 1433 (da xac minh 26/07/2026 — khong can instanceName/SQL Browser)
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=ClassManagement;encrypt=true;trustServerCertificate=true}
+    username: ${DB_USER:class_app}
+    password: ${DB_PASSWORD:ClassApp@2026!}
+
+  jpa:
+    hibernate:
+      ddl-auto: none        # schema do Flyway quan ly, Hibernate khong dong vao DDL
+    open-in-view: false
+    # NFR-7: cot DATETIME2 luu UTC — Hibernate 6 map Instant qua TIMESTAMP_UTC (tu pin UTC).
+    # KHONG dat hibernate.jdbc.time_zone: no lam cot TIME (18:00) bi doc lech +8h
+    # (java.sql.Time epoch 1970 — mui gio Saigon nam 1970 la UTC+8).
+
+  flyway:
+    # {vendor} tu dong thanh "sqlserver" hoac "postgresql" theo datasource dang ket noi (NFR-5)
+    locations: classpath:db/migration/{vendor}
+    # Baseline CHI danh cho DB co san schema nhung chua co flyway_schema_history
+    # (DB SQL Server local da duoc dong dau baseline v2 roi — khong can nua).
+    # Mac dinh TAT: DB trong (Supabase) migrate du V1+V2; DB la co san do thi fail to tieng
+    # thay vi lang le baseline bo qua schema. Can baseline lai: dat 2 bien env nay.
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:1}
+
+app:
+  jwt:
+    # Doi secret khi chay that: dat bien moi truong JWT_SECRET
+    secret: ${JWT_SECRET:eab69b4c0f8cd35a6ea491242853b4d172b9e48ccb73b33f5e2db843d5c59e0a}
+    expires: ${JWT_EXPIRES_IN:12h}
+  seed:
+    # Sau khi Flyway seed du lieu mau, tu dong thay hash placeholder bang bcrypt("Admin@123")
+    fix-placeholder-passwords: true

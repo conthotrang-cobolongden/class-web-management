@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(*)",
+      "Bash(*)",
+      "Bash(npm --version)",
+      "Bash(where sqlcmd *)",
+      "Bash(powershell -NoProfile -Command \"Get-Service | Where-Object { \\\\$_.Name -like '*SQL*' } | Select-Object Name, Status, DisplayName | Format-Table -AutoSize\" 2>/dev/null)",
+      "Bash(sqlcmd -S localhost -E -C -Q \"SELECT @@VERSION AS version; SELECT name FROM sys.databases;\" -W)",
+      "Bash(sqlcmd *)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "PowerShell(Get-ChildItem -Recurse -File | Select-Object -First 200 | ForEach-Object { $_.FullName.Replace\\(\"$PWD\\\\\", \"\"\\) })",
+      "PowerShell(Get-ChildItem -Recurse -File | Where-Object { $_.FullName -notmatch 'node_modules' } | ForEach-Object { \"$\\($_.FullName.Replace\\(\"$PWD\\\\\", ''\\)\\)  \\($\\([math]::Round\\($_.Length/1KB,1\\)\\) KB\\)\" })"
+    ]
+  }
+}

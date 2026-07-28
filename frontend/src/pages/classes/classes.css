@@ -1,0 +1,62 @@
+/* Tinh chinh nho danh rieng cho nhom trang Lop hoc (classes) */
+
+/* Tieu de con trong card: tieu de + nut hanh dong 2 ben */
+.subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.subhead h3 { margin: 0; }
+
+/* Hang phan tu tu xuong dong duoc (badge khung tuan, hang sua lich) */
+.wrap-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Nhan cho nhom checkbox (khong dung <label> bao ngoai) */
+.field-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Thanh tab noi bo cua trang chi tiet lop */
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.back-link { margin-bottom: 6px; }
+
+.page-title { margin: 0; }
+
+/* Badge dung canh nhau trong 1 o (VD: "Binh thuong" + "Buoi bu") */
+.badge-gap { margin-left: 6px; }
+
+/* Khoi skeleton cho trang chi tiet dang tai */
+.skeleton-line { height: 28px; width: 45%; }
+.skeleton-block { height: 150px; }
+
+/* Mobile: tab-bar cuon ngang 1 hang, nut tab gon lai */
+@media (max-width: 768px) {
+  .tab-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-bar .btn {
+    min-height: 40px;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}

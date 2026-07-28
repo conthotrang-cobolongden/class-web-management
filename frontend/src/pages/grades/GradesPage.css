@@ -1,0 +1,36 @@
+/* Kieu rieng cho trang Bang diem — chi bo sung nhung gi styles.css chua co */
+
+.grade-input {
+  width: 76px;
+  padding: 6px 8px;
+  text-align: center;
+}
+
+/* O da sua nhung chua luu */
+.grade-input.changed {
+  border-color: var(--accent);
+  background: #eef2ff;
+}
+
+.grade-avg {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Dong phu (trong so / thang diem / ngay) trong header cot */
+.grade-col-head .muted {
+  display: block;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 11.5px;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Mobile (NFR-1): o nhap gon hon, bang van cuon ngang trong .table-wrap */
+@media (max-width: 768px) {
+  .grade-input {
+    width: 64px;
+  }
+}

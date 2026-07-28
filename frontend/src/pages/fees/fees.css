@@ -1,0 +1,41 @@
+/* CSS bo sung rieng cho trang Hoc phi — chi them class CHUA co trong styles.css */
+
+/* Hang khoan phi bam duoc de mo rong xem lich su dong tien */
+.fee-row { cursor: pointer; }
+
+/* Dong phu nho duoi so tien (hien thi tien goc + ly do dieu chinh) */
+.fee-sub { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 400; }
+
+/* Gom so tien + dong phu vao 1 khoi de mobile (td flex) khong bi tach hang */
+.fee-amount { min-width: 0; }
+
+/* Khu vuc mo rong chua bang lich su dong tien */
+.payments-row > td { background: #fafafa; }
+.payments-row table { font-size: 13px; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+.payments-title { font-size: 13px; font-weight: 600; margin: 2px 0 8px; }
+
+/* 3 o tong nhanh cua trang hien tai — ban thu nho cua .stat-grid */
+.stat-grid.fee-stats { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.fee-stats .card { padding: 12px 14px; }
+.fee-stats .stat-num { font-size: 20px; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 768px) {
+  /* Mobile: moi o thanh 1 hang ngang gon (nhan trai — so phai), khong bao gio tran chu */
+  .stat-grid.fee-stats { grid-template-columns: 1fr; gap: 8px; }
+  .fee-stats .card {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    padding: 10px 14px;
+  }
+  .fee-stats .stat-label { margin-bottom: 0; flex-shrink: 0; }
+  .fee-stats .stat-num { font-size: 17px; }
+  .fee-stats .stat-sub { display: none; }
+
+  /* Form trong bottom-sheet: nut bam keo het chieu ngang cho de cham */
+  .fee-sheet-form .row-gap .btn { flex: 1; }
+
+  /* Hang mo rong lich su dong tien: giu dang khoi, khong bi .table-cards flex hoa */
+  .table-cards .payments-row > td { display: block; text-align: left; }
+  .table-cards .payments-row table tr { border-bottom: 1px dashed var(--line); padding: 4px 2px; }
+  .table-cards .payments-row table tr:last-child { border-bottom: none; }
+  .table-cards .payments-row table td { padding: 5px 8px; }
+}

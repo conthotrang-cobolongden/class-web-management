@@ -1,0 +1,53 @@
+/* Trang tong quan (HomePage) — style rieng, CHI bo sung phan styles.css chua co.
+   (.stat-grid/.stat-num/.chart-card/.chart-grid/.skeleton da nam trong styles.css) */
+
+/* ---- Hinh dang skeleton khi dang tai ---- */
+.sk-label { height: 13px; width: 55%; margin-bottom: 10px; }
+.sk-num { height: 30px; width: 40%; }
+.sk-title { height: 16px; width: 45%; margin-bottom: 12px; }
+.sk-line { height: 13px; width: 85%; margin-bottom: 8px; }
+.sk-line-short { height: 13px; width: 55%; margin-bottom: 8px; }
+.sk-chart { height: 260px; width: 100%; margin-bottom: 8px; }
+.sk-btn { height: 36px; width: 100%; margin-top: 6px; }
+
+/* ---- Danh sach lop cua GV/TG ---- */
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.class-grid .card {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow var(--speed) ease, transform var(--speed) ease;
+}
+
+/* Chi nang the khi thiet bi co hover that (tranh dinh hover tren mobile) */
+@media (hover: hover) {
+  .class-grid .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+}
+
+.class-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.class-head h3 { margin: 0; font-size: 16px; }
+.class-meta { font-size: 13.5px; color: var(--muted); }
+
+.quick-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+/* Link duoc style nhu nut (.btn) — flex 1 de nut chia deu, de bam tren dien thoai */
+.quick-links a { text-decoration: none; flex: 1 1 auto; }
