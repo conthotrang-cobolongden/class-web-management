@@ -1,6 +1,7 @@
 package com.classmanagement.user;
 
 import com.classmanagement.common.ApiException;
+import com.classmanagement.common.AuditService;
 import com.classmanagement.common.PageResponse;
 import com.classmanagement.common.Pagination;
 import com.classmanagement.user.dto.CreateUserRequest;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Service
 public class UserService {
@@ -23,10 +26,12 @@ public class UserService {
 
     private final UserRepository users;
     private final PasswordEncoder encoder;
+    private final AuditService audit;
 
-    public UserService(UserRepository users, PasswordEncoder encoder) {
+    public UserService(UserRepository users, PasswordEncoder encoder, AuditService audit) {
         this.users = users;
         this.encoder = encoder;
+        this.audit = audit;
     }
 
     public static String normalizeEmail(String email) {
@@ -63,7 +68,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserDto create(CreateUserRequest req) {
+    public UserDto create(CreateUserRequest req, Long actorId) {
         assertRole(req.role());
         User u = new User();
         u.setFullName(req.fullName());
@@ -72,6 +77,8 @@ public class UserService {
         u.setRole(req.role());
         u.setPhone(emptyToNull(req.phone()));
         users.save(u);
+        audit.audit("users", "users", u.getId(), "create",
+                "Tạo tài khoản " + u.getEmail(), null, snapshot(u), actorId);
         return UserDto.from(u);
     }
 
@@ -80,6 +87,7 @@ public class UserService {
         User u = users.findById(id)
                 .orElseThrow(() -> new ApiException(404, "Không tìm thấy tài khoản"));
 
+        Map<String, Object> oldValues = snapshot(u);
         boolean changed = false;
         if (req.has("full_name")) {
             u.setFullName(req.get("full_name"));
@@ -107,17 +115,26 @@ public class UserService {
         }
         // Admin dat lai mat khau cho user quen (khong can mat khau cu); null/"" bo qua nhu Node
         String password = req.has("password") ? req.get("password") : null;
+        boolean passwordChanged = false;
         if (password != null && !password.isEmpty()) {
             if (password.length() < 6) {
                 throw new ApiException(400, "Mật khẩu phải có ít nhất 6 ký tự");
             }
             u.setPasswordHash(encoder.encode(password));
+            passwordChanged = true;
             changed = true;
         }
         if (!changed) {
             throw new ApiException(400, "Không có gì để cập nhật");
         }
         users.save(u);
+        audit.audit("users", "users", u.getId(), "update",
+                "Cập nhật tài khoản " + u.getEmail(), oldValues, snapshot(u), currentUserId);
+        if (passwordChanged) {
+            audit.audit("authentication", "users", u.getId(), "update",
+                    "Admin đặt lại mật khẩu", null,
+                    Map.of("password_changed", true), currentUserId);
+        }
         return UserDto.from(u);
     }
 
@@ -129,15 +146,32 @@ public class UserService {
         }
         User u = users.findById(id)
                 .orElseThrow(() -> new ApiException(404, "Không tìm thấy tài khoản"));
+        Map<String, Object> oldValues = snapshot(u);
         u.setActive(false);
         users.save(u);
+        audit.audit("users", "users", u.getId(), "update", "Vô hiệu hóa tài khoản",
+                oldValues, snapshot(u), currentUserId);
     }
 
     @Transactional
-    public void activate(Long id) {
+    public void activate(Long id, Long currentUserId) {
         User u = users.findById(id)
                 .orElseThrow(() -> new ApiException(404, "Không tìm thấy tài khoản"));
+        Map<String, Object> oldValues = snapshot(u);
         u.setActive(true);
         users.save(u);
+        audit.audit("users", "users", u.getId(), "update", "Kích hoạt tài khoản",
+                oldValues, snapshot(u), currentUserId);
+    }
+
+    private static Map<String, Object> snapshot(User user) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("id", user.getId());
+        values.put("full_name", user.getFullName());
+        values.put("email", user.getEmail());
+        values.put("role", user.getRole());
+        values.put("phone", user.getPhone());
+        values.put("is_active", user.isActive());
+        return values;
     }
 }

@@ -27,24 +27,26 @@ export function clearSession() {
 }
 
 export class ApiError extends Error {
-  constructor(status, message) {
+  constructor(status, message, data = null) {
     super(message);
     this.status = status;
+    this.data = data;
   }
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
   const headers = {};
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined && !isFormData) headers['Content-Type'] = 'application/json';
 
   let res;
   try {
     res = await fetch(`/api${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body !== undefined ? (isFormData ? body : JSON.stringify(body)) : undefined,
     });
   } catch {
     // fetch reject = khong co HTTP response (backend chet / mat mang) — dich sang tieng Viet
@@ -65,7 +67,68 @@ export async function api(path, { method = 'GET', body } = {}) {
       clearSession();
       window.location.assign('/login');
     }
-    throw new ApiError(res.status, (data && data.error) || 'Lỗi hệ thống, vui lòng thử lại');
+    const message = (data && data.error)
+      || (data && Array.isArray(data.errors) && `File có ${data.errors.length} lỗi`)
+      || 'Lỗi hệ thống, vui lòng thử lại';
+    throw new ApiError(res.status, message, data);
   }
   return data;
+}
+
+function responseFilename(response, fallback) {
+  const disposition = response.headers.get('content-disposition') || '';
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1]);
+    } catch {
+      return fallback;
+    }
+  }
+  const plain = disposition.match(/filename="?([^";]+)"?/i);
+  return plain ? plain[1] : fallback;
+}
+
+export async function downloadApiFile(path) {
+  const token = getToken();
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let response;
+  try {
+    response = await fetch(`/api${path}`, { headers });
+  } catch {
+    throw new ApiError(0, 'Không kết nối được máy chủ, vui lòng kiểm tra mạng và thử lại');
+  }
+
+  if (!response.ok) {
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      // Phản hồi lỗi không có JSON.
+    }
+    if (response.status === 401 && token) {
+      clearSession();
+      window.location.assign('/login');
+    }
+    throw new ApiError(
+      response.status,
+      (data && data.error) || 'Không tải được file mẫu, vui lòng thử lại',
+      data,
+    );
+  }
+
+  const blob = await response.blob();
+  const filename = responseFilename(response, 'mau-danh-sach-hoc-sinh.xlsx');
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+  return filename;
 }

@@ -1,10 +1,14 @@
 package com.classmanagement.domain;
 
+import com.classmanagement.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -23,9 +27,15 @@ public class AuditLog {
     @Column(name = "table_name", nullable = false, length = 50)
     private String tableName;
 
-    @Column(name = "record_id", nullable = false)
+    @Column(name = "record_id")
     private Long recordId;
 
+
+    @Column(nullable = false, length = 30)
+    private String category;
+
+    @Column(length = 300)
+    private String description;
     // create / update / delete
     @Column(nullable = false, length = 20)
     private String action;
@@ -36,15 +46,21 @@ public class AuditLog {
     @Column(name = "new_values", length = Integer.MAX_VALUE)
     private String newValues;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User actor;
+
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @PrePersist
     void onCreate() {
-        createdAt = Instant.now();
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
     public Long getId() {
@@ -65,6 +81,22 @@ public class AuditLog {
 
     public void setRecordId(Long recordId) {
         this.recordId = recordId;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getAction() {
@@ -99,6 +131,9 @@ public class AuditLog {
         this.userId = userId;
     }
 
+    public User getActor() {
+        return actor;
+    }
     public Instant getCreatedAt() {
         return createdAt;
     }

@@ -7,6 +7,8 @@ import com.classmanagement.attendance.dto.AttendanceStatsItem;
 import com.classmanagement.attendance.dto.SaveAttendanceRequest;
 import com.classmanagement.attendance.dto.SessionDto;
 import com.classmanagement.common.ApiException;
+import com.classmanagement.common.AttendanceEditDecision;
+import com.classmanagement.common.AttendanceEditPolicy;
 import com.classmanagement.common.AuditService;
 import com.classmanagement.common.ClassAccessService;
 import com.classmanagement.common.TimeUtil;
@@ -28,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.Collator;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -48,9 +49,6 @@ public class AttendanceService {
 
     public static final List<String> STATUSES = List.of("present", "absent", "late", "excused");
 
-    // FR-4.2: GV/TG chi duoc diem danh & sua trong 24h ke tu gio bat dau buoi hoc (gio VN)
-    private static final Duration EDIT_WINDOW = Duration.ofHours(24);
-
     private final ClassSessionRepository sessions;
     private final AttendanceRecordRepository attendance;
     private final EnrollmentRepository enrollments;
@@ -59,11 +57,12 @@ public class AttendanceService {
     private final UserRepository users;
     private final ClassAccessService classAccess;
     private final AuditService auditService;
+    private final AttendanceEditPolicy editPolicy;
 
     public AttendanceService(ClassSessionRepository sessions, AttendanceRecordRepository attendance,
                              EnrollmentRepository enrollments, StudentRepository students,
-                             SchoolClassRepository classes, UserRepository users,
-                             ClassAccessService classAccess, AuditService auditService) {
+                             SchoolClassRepository classes, UserRepository users, ClassAccessService classAccess,
+                             AuditService auditService, AttendanceEditPolicy editPolicy) {
         this.sessions = sessions;
         this.attendance = attendance;
         this.enrollments = enrollments;
@@ -71,6 +70,7 @@ public class AttendanceService {
         this.classes = classes;
         this.users = users;
         this.classAccess = classAccess;
+        this.editPolicy = editPolicy;
         this.auditService = auditService;
     }
 
@@ -106,7 +106,9 @@ public class AttendanceService {
                             r == null ? null : r.getRecordedAt());
                 })
                 .toList();
-        return new AttendanceRosterResponse(SessionDto.from(session, className), items);
+        AttendanceEditDecision decision = editPolicy.evaluate(me, session);
+        return new AttendanceRosterResponse(SessionDto.from(session, className), items, decision.allowed(),
+                decision.opensAt(), decision.closesAt(), decision.reason());
     }
 
     // PUT /api/sessions/{id}/attendance — bulk upsert (FR-4.1, FR-4.2).
@@ -126,12 +128,10 @@ public class AttendanceService {
             throw new ApiException(400, "Danh sách điểm danh (items) không được rỗng");
         }
 
-        // Khoa 24h: qua han thi chi admin duoc sua, va moi thay doi cua admin phai audit (NFR-4)
-        Instant deadline = TimeUtil.sessionStartUtc(session.getSessionDate(), session.getStartTime())
-                .plus(EDIT_WINDOW);
-        boolean past24h = Instant.now().isAfter(deadline);
-        if (past24h && !ClassAccessService.isAdmin(me)) {
-            throw new ApiException(403, "Đã quá 24h, chỉ Admin được sửa điểm danh");
+        // Backend la nguon quyet dinh cua so sua theo vai tro.
+        AttendanceEditDecision decision = editPolicy.evaluate(me, session);
+        if (!decision.allowed()) {
+            throw new ApiException(403, decision.reason());
         }
 
         Set<Long> rosterIds = enrollments.findOpenByClassAtDate(session.getClassId(), session.getSessionDate())
@@ -170,10 +170,8 @@ public class AttendanceService {
                 record.setRecordedBy(me.getId());
                 attendance.save(record);
                 existing.put(item.studentId(), record);
-                if (past24h) {
-                    auditService.audit("attendance", record.getId(), "create",
-                            null, snapshot(record.getStatus(), record.getNote()), me.getId());
-                }
+                auditService.audit("attendance", record.getId(), "create",
+                        null, snapshot(record.getStatus(), record.getNote()), me.getId());
             } else {
                 boolean changed = !item.status().equals(record.getStatus())
                         || !Objects.equals(note, record.getNote());
@@ -185,10 +183,8 @@ public class AttendanceService {
                 record.setNote(note);
                 record.setUpdatedBy(me.getId());
                 attendance.save(record);
-                if (past24h) {
-                    auditService.audit("attendance", record.getId(), "update",
-                            old, snapshot(record.getStatus(), record.getNote()), me.getId());
-                }
+                auditService.audit("attendance", record.getId(), "update",
+                        old, snapshot(record.getStatus(), record.getNote()), me.getId());
             }
         }
         return items.size();

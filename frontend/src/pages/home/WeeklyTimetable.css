@@ -1,0 +1,153 @@
+.tt-shell {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.tt-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.tt-heading h3 { margin-bottom: 4px; }
+.tt-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+.tt-range { color: var(--muted); font-size: 13px; font-weight: 700; white-space: nowrap; }
+
+.tt-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.tt-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tt-loading { display: grid; gap: 8px; }
+.tt-loading .skeleton { height: 74px; }
+
+.tt-empty,
+.tt-empty-day {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.tt-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.tt-grid { min-width: 960px; background: var(--line); display: grid; gap: 1px; }
+.tt-corner,
+.tt-day-head,
+.tt-time,
+.tt-cell { background: var(--panel); }
+
+.tt-grid {
+  grid-template-columns: 72px repeat(7, minmax(124px, 1fr));
+}
+
+.tt-corner { padding: 10px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.tt-day-head { padding: 9px 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tt-day-head span { color: var(--muted); font-size: 12px; }
+.tt-day-head.is-today { background: var(--accent-soft); color: var(--accent-dark); }
+
+.tt-row { display: contents; }
+.tt-time {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding: 11px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tt-cell { min-height: 88px; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.tt-cell.is-today { background: #fafaff; }
+
+.tt-event {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 66px;
+  padding: 8px;
+  border: 1px solid #d8dcff;
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform var(--speed) ease, box-shadow var(--speed) ease;
+}
+
+.tt-event:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+.tt-event:focus-visible { outline: 3px solid rgba(79, 70, 229, 0.3); outline-offset: 2px; }
+.tt-event.is-cancelled { border-color: #fecaca; border-left-color: var(--danger); background: #fef2f2; }
+.tt-event.is-cancelled strong { text-decoration: line-through; }
+.tt-event-time { color: var(--muted); font-size: 11px; font-weight: 700; }
+.tt-event strong { font-size: 13px; line-height: 1.25; }
+.tt-event-meta { color: var(--muted); font-size: 11px; }
+
+.tt-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+.tt-badge { border-radius: 999px; padding: 2px 6px; font-size: 10px; font-weight: 700; }
+.tt-badge.is-cancelled { color: var(--danger); background: #fee2e2; }
+.tt-badge.is-makeup { color: var(--warn); background: #fef3c7; }
+
+.tt-mobile { display: none; }
+
+@media (max-width: 767px) {
+  .tt-shell { margin-top: 14px; padding: 14px; }
+  .tt-heading { flex-direction: column; gap: 6px; }
+  .tt-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .tt-controls .btn { min-height: 44px; padding-inline: 7px; font-size: 12px; }
+  .tt-desktop { display: none; }
+  .tt-mobile { display: block; }
+
+  .tt-day-pills {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(40px, 1fr));
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .tt-day-pills button {
+    min-width: 0;
+    min-height: 52px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--panel);
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    cursor: pointer;
+  }
+
+  .tt-day-pills button span { font-size: 10px; font-weight: 700; }
+  .tt-day-pills button strong { font-size: 15px; }
+  .tt-day-pills button.is-today { border-color: #c7d2fe; }
+  .tt-day-pills button.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .tt-agenda { display: grid; gap: 8px; }
+  .tt-agenda .tt-event { min-height: 72px; padding: 10px 12px; }
+  .tt-empty-day { min-height: 88px; }
+}
+
+@media (min-width: 1280px) {
+  .tt-grid { min-width: 100%; }
+  .tt-cell { min-height: 96px; }
+}

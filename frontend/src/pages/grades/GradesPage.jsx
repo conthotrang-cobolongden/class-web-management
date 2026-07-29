@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, getToken } from '../../api.js';
-import { useAuth } from '../../auth.jsx';
 import { fmtDate } from '../../format.js';
 import './GradesPage.css';
 
@@ -16,8 +15,6 @@ function fmtAvg(v) {
 }
 
 export default function GradesPage() {
-  const { user: me } = useAuth();
-
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState('');
   const [data, setData] = useState(null); // {columns: [...], items: [...]}
@@ -88,8 +85,8 @@ export default function GradesPage() {
   }
 
   const selCls = classes.find((c) => String(c.id) === String(classId));
-  // manager = admin hoac GV chinh cua lop (backend van la chot chan that su)
-  const isManager = me.role === 'admin' || (!!selCls && !!selCls.main_teacher && selCls.main_teacher.id === me.id);
+  // Lop trong dropdown da duoc backend loc theo membership; backend van la chot chan cuoi.
+  const canManageColumns = Boolean(selCls);
 
   // ===== O diem =====
 
@@ -314,7 +311,7 @@ export default function GradesPage() {
         <h2>Bảng điểm</h2>
         {classId && data && (
           <div className="row-gap">
-            {isManager && (
+            {canManageColumns && (
               <button
                 type="button"
                 className="btn"
@@ -358,7 +355,7 @@ export default function GradesPage() {
         </label>
       </div>
 
-      {showColumns && isManager && data && (
+      {showColumns && canManageColumns && data && (
         <div className="card stack">
           <div className="page-head">
             <h3>Cột điểm ({data.columns.length})</h3>
@@ -543,7 +540,7 @@ export default function GradesPage() {
       {classId && !loading && data && data.columns.length === 0 && (
         <p className="muted">
           Lớp chưa có cột điểm.
-          {isManager ? ' Bấm "Quản lý cột điểm" để thêm cột đầu tiên.' : ' Liên hệ giáo viên chính để thêm cột điểm.'}
+          {canManageColumns ? ' Bấm "Quản lý cột điểm" để thêm cột đầu tiên.' : ''}
         </p>
       )}
     </div>

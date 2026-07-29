@@ -6,6 +6,7 @@ import { ROLE_LABELS, useAuth } from '../auth.jsx';
 const I = {
   home: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></svg>,
   users: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5" /><circle cx="17" cy="9" r="2.5" /><path d="M16 15.2c2.4.3 4.4 1.8 5 4.8" /></svg>,
+  logs: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h9l3 3v15H6z" /><path d="M14 3v4h4M9 11h6M9 15h6" /></svg>,
   class: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="14" rx="2" /><path d="M8 21h8M12 18v3" /></svg>,
   student: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 8.5 12 4l10 4.5L12 13 2 8.5Z" /><path d="M6.5 10.5V16c0 1.5 2.5 3 5.5 3s5.5-1.5 5.5-3v-5.5" /></svg>,
   check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4M16 3v4M8.5 13.5l2.5 2.5 4.5-4.5" /></svg>,
@@ -57,6 +58,7 @@ export default function Layout() {
         <nav>
           <NavLink to="/" end>{I.home}Tổng quan</NavLink>
           {user.role === 'admin' && <NavLink to="/users">{I.users}Tài khoản</NavLink>}
+          {user.role === 'admin' && <NavLink to="/logs">{I.logs}Nhật ký</NavLink>}
           {MODULES.map(({ to, label, icon }) => (
             <NavLink key={to} to={to}>{icon}{label}</NavLink>
           ))}
@@ -115,6 +117,9 @@ export default function Layout() {
                 <NavLink to="/users" onClick={closeSheet}>{I.users}Tài khoản</NavLink>
               )}
               <NavLink to="/doi-mat-khau" onClick={closeSheet}>{I.key}Đổi mật khẩu</NavLink>
+              {user.role === 'admin' && (
+                <NavLink to="/logs" onClick={closeSheet}>{I.logs}Nhật ký</NavLink>
+              )}
               <button type="button" onClick={handleLogout}>{I.logout}Đăng xuất</button>
             </nav>
           </div>

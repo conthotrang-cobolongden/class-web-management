@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 // Ho so chi tiet HS + lich su enrollments (GET /api/students/{id})
-public record StudentDetailDto(Long id, String fullName, LocalDate dob, String gender,
+public record StudentDetailDto(Long id, String studentCode, String fullName, LocalDate dob, String gender,
                                String schoolName, String parentName, String parentPhone,
                                LocalDate enrollmentDate, String status, String note,
                                StudentDto.CurrentClass currentClass,
@@ -15,7 +15,7 @@ public record StudentDetailDto(Long id, String fullName, LocalDate dob, String g
 
     public static StudentDetailDto from(Student s, SchoolClass currentClass,
                                         List<EnrollmentDto> enrollments) {
-        return new StudentDetailDto(s.getId(), s.getFullName(), s.getDob(), s.getGender(),
+        return new StudentDetailDto(s.getId(), s.getStudentCode(), s.getFullName(), s.getDob(), s.getGender(),
                 s.getSchoolName(), s.getParentName(), s.getParentPhone(),
                 s.getEnrollmentDate(), s.getStatus(), s.getNote(),
                 StudentDto.CurrentClass.from(currentClass), enrollments);

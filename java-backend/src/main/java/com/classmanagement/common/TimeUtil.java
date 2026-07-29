@@ -18,4 +18,9 @@ public final class TimeUtil {
     public static Instant sessionStartUtc(LocalDate sessionDate, LocalTime startTime) {
         return sessionDate.atTime(startTime).atZone(VN_ZONE).toInstant();
     }
+
+    // Thoi diem ket thuc buoi hoc (gio VN) tinh ra Instant UTC.
+    public static Instant sessionEndUtc(LocalDate sessionDate, LocalTime endTime) {
+        return sessionDate.atTime(endTime).atZone(VN_ZONE).toInstant();
+    }
 }
