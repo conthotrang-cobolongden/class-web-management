@@ -13,6 +13,7 @@ import AttendancePage from './pages/attendance/AttendancePage.jsx';
 import GradesPage from './pages/grades/GradesPage.jsx';
 import FeesPage from './pages/fees/FeesPage.jsx';
 import ReportsPage from './pages/reports/ReportsPage.jsx';
+import AuditLogsPage from './pages/audit/AuditLogsPage.jsx';
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -45,6 +46,14 @@ export default function App() {
           element={(
             <RequireAdmin>
               <UsersPage />
+            </RequireAdmin>
+          )}
+        />
+        <Route
+          path="logs"
+          element={(
+            <RequireAdmin>
+              <AuditLogsPage />
             </RequireAdmin>
           )}
         />

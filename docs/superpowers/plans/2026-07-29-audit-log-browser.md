@@ -1002,7 +1002,7 @@ git commit -m "feat: expose admin audit log navigation"
 - Modify only files required by defects reproduced during this task.
 - Update: `docs/superpowers/plans/2026-07-29-audit-log-browser.md` by checking completed steps.
 
-- [ ] **Step 1: Run full backend verification**
+- [x] **Step 1: Run full backend verification**
 
 ```powershell
 cd java-backend
@@ -1013,7 +1013,7 @@ mvn.cmd package
 Expected: zero test failures and `target/class-management-backend-0.1.0.jar`
 exists.
 
-- [ ] **Step 2: Run full frontend verification**
+- [x] **Step 2: Run full frontend verification**
 
 ```powershell
 cd ..\frontend
@@ -1023,7 +1023,7 @@ npm.cmd run build
 
 Expected: zero test failures and a successful production build in `dist/`.
 
-- [ ] **Step 3: Start the backend and smoke-test authorization/filtering**
+- [x] **Step 3: Start the backend and smoke-test authorization/filtering**
 
 Start the backend with the existing local SQL Server configuration, authenticate
 as Admin, and call:
@@ -1036,13 +1036,13 @@ Expected: HTTP 200 with `items`, `total`, `page`, and `page_size`.
 Repeat with a teacher token and expect HTTP 403. Send POST to the same path and
 expect HTTP 403/405 with no database mutation.
 
-- [ ] **Step 4: Verify migration compatibility**
+- [x] **Step 4: Verify migration compatibility**
 
 Run Flyway validation through application startup against the existing local
 SQL Server database. Confirm V1–V3 remain successful and that this feature adds
 no migration because it only maps the existing nullable `user_id` relation.
 
-- [ ] **Step 5: Verify responsive layouts**
+- [x] **Step 5: Verify responsive layouts**
 
 Run the frontend locally and inspect `/logs` at:
 
@@ -1054,7 +1054,7 @@ Run the frontend locally and inspect `/logs` at:
 At every width, verify loading, empty, error, permission, filtered-results,
 drawer/card detail, keyboard focus, and no edit/delete controls.
 
-- [ ] **Step 6: Review the final diff**
+- [x] **Step 6: Review the final diff**
 
 Run:
 
@@ -1068,13 +1068,13 @@ git log --oneline -8
 Expected: no whitespace errors, no generated `dist` or `target` files staged,
 and only intended source/test/doc changes.
 
-- [ ] **Step 7: Request code review and fix every Critical/Important finding**
+- [x] **Step 7: Request code review and fix every Critical/Important finding**
 
 Review the accumulated commits against
 `docs/superpowers/specs/2026-07-29-audit-log-browser-design.md`. Re-run the
 specific red test before each correction and the relevant green suite after it.
 
-- [ ] **Step 8: Create final local commit if QA produced corrections**
+- [x] **Step 8: Create final local commit if QA produced corrections**
 
 ```powershell
 git add --update java-backend/src frontend/src docs/superpowers/plans/2026-07-29-audit-log-browser.md
