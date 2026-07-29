@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 // FR-1.2, FR-1.3: quan tri tai khoan chi danh cho admin (NFR-2: chan o backend)
                 .requestMatchers("/api/users/**").hasAuthority("admin")
+                .requestMatchers(HttpMethod.GET, "/api/audit-logs/**").hasAuthority("admin")
+                .requestMatchers("/api/audit-logs/**").denyAll()
                 .requestMatchers("/api/**").authenticated()
                 // Ngoai /api khong co resource nao -> roi vao NoResourceFoundException (404)
                 .anyRequest().permitAll())
