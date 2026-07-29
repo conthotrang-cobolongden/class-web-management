@@ -74,6 +74,12 @@ class StudentImportServiceTest {
         }).when(students).saveAndFlush(any(Student.class));
         doAnswer(invocation -> invocation.getArgument(0))
                 .when(students).save(any(Student.class));
+        AtomicLong enrollmentIds = new AtomicLong(80);
+        doAnswer(invocation -> {
+            Enrollment enrollment = invocation.getArgument(0);
+            ReflectionTestUtils.setField(enrollment, "id", enrollmentIds.incrementAndGet());
+            return enrollment;
+        }).when(enrollments).save(any(Enrollment.class));
     }
 
     @Test
@@ -105,6 +111,11 @@ class StudentImportServiceTest {
         assertTrue(result.errors().isEmpty());
         verify(students, org.mockito.Mockito.times(2)).saveAndFlush(any(Student.class));
         verify(enrollments, org.mockito.Mockito.times(2)).save(any(Enrollment.class));
+        verify(audit, org.mockito.Mockito.times(2)).audit(
+                org.mockito.ArgumentMatchers.eq("students"),
+                org.mockito.ArgumentMatchers.eq("enrollments"),
+                anyLong(), org.mockito.ArgumentMatchers.eq("create"), any(String.class),
+                org.mockito.ArgumentMatchers.isNull(), any(), org.mockito.ArgumentMatchers.eq(2L));
     }
 
     @Test

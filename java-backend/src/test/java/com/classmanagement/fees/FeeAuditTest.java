@@ -59,7 +59,7 @@ class FeeAuditTest {
     }
 
     @Test
-    void successfulPaymentWritesCategorizedAuditWithFeeContext() {
+    void successfulPaymentWritesCategorizedAuditWithFeeContext() throws Exception {
         service.addPayment(TestUsers.assistant(2L), 100L, request(new BigDecimal("500000")));
 
         ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
@@ -72,7 +72,8 @@ class FeeAuditTest {
         assertTrue(log.getNewValues().contains("\"monthly_fee_id\":100"));
         assertTrue(log.getNewValues().contains("\"student_id\":7"));
         assertTrue(log.getNewValues().contains("\"class_id\":10"));
-        assertTrue(log.getNewValues().contains("\"amount\":500000"));
+        assertEquals(0, new ObjectMapper().readTree(log.getNewValues()).get("amount")
+                .decimalValue().compareTo(new BigDecimal("500000")));
         assertTrue(log.getNewValues().contains("\"method\":\"cash\""));
     }
 

@@ -29,6 +29,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -144,6 +145,8 @@ public class SessionService {
         s.setMakeupForSessionId(req.makeupForSessionId());
         s.setNote(emptyToNull(req.note()));
         sessions.save(s);
+        audit.audit("sessions", "sessions", s.getId(), "create",
+                "Tạo buổi học lớp " + clazz.getName(), null, snapshot(s), me.getId());
         return SessionDto.from(s, clazz.getName(), 0);
     }
 
@@ -156,6 +159,7 @@ public class SessionService {
         if (!"scheduled".equals(s.getStatus())) {
             throw new ApiException(400, "Không thể sửa buổi học đã bị hủy");
         }
+        Map<String, Object> oldValues = snapshot(s);
 
         LocalDate oldDate = s.getSessionDate();
         LocalTime oldStart = s.getStartTime();
@@ -192,6 +196,8 @@ public class SessionService {
             throw new ApiException(409, "Lớp đã có buổi học vào ngày giờ này");
         }
         sessions.save(s);
+        audit.audit("sessions", "sessions", s.getId(), "update",
+                "Cập nhật buổi học #" + s.getId(), oldValues, snapshot(s), me.getId());
 
         String className = classes.findById(s.getClassId()).map(SchoolClass::getName).orElse(null);
         return SessionDto.from(s, className, attendance.countBySessionId(s.getId()));
@@ -215,10 +221,25 @@ public class SessionService {
         Map<String, Object> newValues = Map.of("status", "cancelled",
                 "cancel_reason", s.getCancelReason());
         // action phai thuoc CHECK ck_audit_logs_action (create/update/delete) — "cancel" bi DB tu choi
-        audit.audit("sessions", s.getId(), "update", oldValues, newValues, me.getId());
+        audit.audit("sessions", "sessions", s.getId(), "update",
+                "Hủy buổi học #" + s.getId(), oldValues, newValues, me.getId());
     }
 
     // ---- helpers ----
+
+    private static Map<String, Object> snapshot(ClassSession session) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("class_id", session.getClassId());
+        values.put("session_date", session.getSessionDate());
+        values.put("start_time", session.getStartTime());
+        values.put("end_time", session.getEndTime());
+        values.put("status", session.getStatus());
+        values.put("is_makeup", session.isMakeup());
+        values.put("makeup_for_session_id", session.getMakeupForSessionId());
+        values.put("note", session.getNote());
+        values.put("cancel_reason", session.getCancelReason());
+        return values;
+    }
 
     private Map<Long, String> classNamesOf(List<ClassSession> content) {
         Set<Long> classIds = content.stream().map(ClassSession::getClassId)

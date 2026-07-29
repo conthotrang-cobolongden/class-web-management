@@ -126,6 +126,12 @@ public class FeeService {
             monthlyFees.save(fee);
             created++;
         }
+        if (created > 0) {
+            auditService.audit("fees", "monthly_fees", null, "create",
+                    "Sinh học phí tháng " + month + "/" + year, null,
+                    Map.of("year", year, "month", month, "created", created, "skipped", skipped),
+                    me.getId());
+        }
         return new GenerateFeesResponse(created, skipped);
     }
 

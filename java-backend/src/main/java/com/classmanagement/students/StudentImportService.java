@@ -223,6 +223,14 @@ public class StudentImportService {
             enrollment.setCustomMonthlyFee(row.customMonthlyFee());
             enrollment.setCreatedBy(me.getId());
             enrollments.save(enrollment);
+            Map<String, Object> enrollmentValues = new LinkedHashMap<>();
+            enrollmentValues.put("student_id", student.getId());
+            enrollmentValues.put("class_id", classId);
+            enrollmentValues.put("joined_at", enrollment.getJoinedAt());
+            enrollmentValues.put("custom_monthly_fee", enrollment.getCustomMonthlyFee());
+            audit.audit("students", "enrollments", enrollment.getId(), "create",
+                    "Xếp lớp khi import " + student.getStudentCode(), null,
+                    enrollmentValues, me.getId());
 
             codes.add(student.getStudentCode());
             Map<String, Object> created = new LinkedHashMap<>();

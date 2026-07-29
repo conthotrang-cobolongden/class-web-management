@@ -11,6 +11,7 @@ import com.classmanagement.classes.dto.ScheduleItemRequest;
 import com.classmanagement.classes.dto.StaffDto;
 import com.classmanagement.classes.dto.UpdateClassRequest;
 import com.classmanagement.common.ApiException;
+import com.classmanagement.common.AuditService;
 import com.classmanagement.common.ClassAccessService;
 import com.classmanagement.common.PageResponse;
 import com.classmanagement.common.Pagination;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,18 +72,20 @@ public class ClassService {
     private final ClassSessionRepository sessions;
     private final EnrollmentRepository enrollments;
     private final StudentRepository students;
+    private final AuditService audit;
     private final UserRepository users;
     private final ClassAccessService access;
 
     public ClassService(SchoolClassRepository classes, ClassStaffRepository classStaff,
                         ClassScheduleRepository schedules, ClassSessionRepository sessions,
                         EnrollmentRepository enrollments, StudentRepository students,
-                        UserRepository users, ClassAccessService access) {
+                        UserRepository users, ClassAccessService access, AuditService audit) {
         this.classes = classes;
         this.classStaff = classStaff;
         this.schedules = schedules;
         this.sessions = sessions;
         this.enrollments = enrollments;
+        this.audit = audit;
         this.students = students;
         this.users = users;
         this.access = access;
@@ -133,6 +137,8 @@ public class ClassService {
         c.setDefaultMonthlyFee(req.defaultMonthlyFee());
         c.setNote(emptyToNull(req.note()));
         classes.save(c);
+        audit.audit("classes", "classes", c.getId(), "create",
+                "Tạo lớp " + c.getName(), null, classSnapshot(c), me.getId());
         return detail(c);
     }
 
@@ -147,6 +153,7 @@ public class ClassService {
     public ClassDetailDto update(User me, Long id, UpdateClassRequest req) {
         assertAdmin(me);
         SchoolClass c = find(id);
+        Map<String, Object> oldValues = classSnapshot(c);
 
         boolean changed = false;
         if (req.has("name")) {
@@ -204,6 +211,8 @@ public class ClassService {
             throw new ApiException(409, "Tên lớp đã tồn tại trong năm học này");
         }
         classes.save(c);
+        audit.audit("classes", "classes", c.getId(), "update",
+                "Cập nhật lớp " + c.getName(), oldValues, classSnapshot(c), me.getId());
         return detail(c);
     }
 
@@ -212,6 +221,9 @@ public class ClassService {
     public List<StaffDto> replaceStaff(User me, Long classId, ReplaceStaffRequest req) {
         assertAdmin(me);
         find(classId);
+        List<Map<String, Object>> oldStaff = classStaff.findByClassId(classId).stream()
+                .map(s -> Map.<String, Object>of("user_id", s.getUserId(), "staff_role", s.getStaffRole()))
+                .toList();
 
         List<Long> assistantIds = req.assistantIds() == null ? List.of() : req.assistantIds();
         List<Long> allIds = new ArrayList<>();
@@ -245,6 +257,8 @@ public class ClassService {
         for (Long userId : assistantIds) {
             result.add(insertStaff(classId, userId, "assistant", byId));
         }
+        audit.audit("classes", "class_staff", classId, "update",
+                "Cập nhật nhân sự lớp #" + classId, oldStaff, result, me.getId());
         return result;
     }
 
@@ -253,6 +267,8 @@ public class ClassService {
     public List<ScheduleDto> replaceSchedules(User me, Long classId, List<ScheduleItemRequest> items) {
         access.assertClassManager(me, classId);
         find(classId);
+        List<ScheduleDto> oldSchedules = schedules.findByClassIdOrderByDayOfWeekAscStartTimeAsc(classId)
+                .stream().map(ScheduleDto::from).toList();
 
         List<ClassSchedule> rows = new ArrayList<>();
         Set<String> seen = new HashSet<>();
@@ -280,6 +296,9 @@ public class ClassService {
         schedules.deleteByClassId(classId);
         schedules.flush();
         schedules.saveAll(rows);
+        audit.audit("sessions", "class_schedules", classId, "update",
+                "Cập nhật thời khóa biểu lớp #" + classId, oldSchedules,
+                rows.stream().map(ScheduleDto::from).toList(), me.getId());
 
         rows.sort(Comparator.comparing(ClassSchedule::getDayOfWeek).thenComparing(ClassSchedule::getStartTime));
         return rows.stream().map(ScheduleDto::from).toList();
@@ -295,7 +314,6 @@ public class ClassService {
         Map<Integer, List<ClassSchedule>> byDayOfWeek =
                 schedules.findByClassIdOrderByDayOfWeekAscStartTimeAsc(classId).stream()
                         .collect(Collectors.groupingBy(ClassSchedule::getDayOfWeek));
-
         int created = 0;
         int skipped = 0;
         for (LocalDate d = c.getStartDate(); !d.isAfter(c.getEndDate()); d = d.plusDays(1)) {
@@ -314,9 +332,27 @@ public class ClassService {
                 created++;
             }
         }
+        if (created > 0) {
+            audit.audit("sessions", "sessions", classId, "create",
+                    "Sinh buổi học cho lớp " + c.getName(), null,
+                    Map.of("created", created, "skipped", skipped), me.getId());
+        }
         return new GenerateResult(created, skipped);
     }
 
+
+    private static Map<String, Object> classSnapshot(SchoolClass value) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("name", value.getName());
+        snapshot.put("grade", value.getGrade());
+        snapshot.put("school_year", value.getSchoolYear());
+        snapshot.put("start_date", value.getStartDate());
+        snapshot.put("end_date", value.getEndDate());
+        snapshot.put("default_monthly_fee", value.getDefaultMonthlyFee());
+        snapshot.put("status", value.getStatus());
+        snapshot.put("note", value.getNote());
+        return snapshot;
+    }
     // ---------- GET /api/classes/{id}/students (member): HS co enrollment dang mo ----------
     public List<ClassStudentDto> listStudents(User me, Long classId) {
         access.assertClassMember(me, classId);

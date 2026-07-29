@@ -96,6 +96,8 @@ public class GradeService {
         col.setColumnDate(req.columnDate());
         col.setCreatedBy(me.getId());
         gradeColumns.save(col);
+        auditService.audit("grades", "grade_columns", col.getId(), "create",
+                "Tạo cột điểm " + col.getName(), null, snapshot(col), me.getId());
         return GradeColumnDto.from(col);
     }
 
@@ -237,6 +239,10 @@ public class GradeService {
                 g.setScore(score);
                 g.setEnteredBy(me.getId());
                 grades.save(g);
+                auditService.audit("grades", "grades", g.getId(), "create",
+                        "Nhập điểm học sinh #" + item.studentId(), null,
+                        Map.of("grade_column_id", item.gradeColumnId(),
+                                "student_id", item.studentId(), "score", score), me.getId());
                 // Cung o diem xuat hien lan nua trong request -> di duong update, khong insert doi
                 existingByKey.put(item.gradeColumnId() + ":" + item.studentId(), g);
             } else if (existing.getScore().compareTo(score) != 0) {
