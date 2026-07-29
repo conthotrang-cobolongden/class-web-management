@@ -233,6 +233,66 @@ describe('AuditLogsPage data behavior', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Chi tiết nhật ký' })).not.toBeInTheDocument();
   });
+
+  it('keeps keyboard focus inside the modal drawer and makes the background inert', async () => {
+    api.mockResolvedValueOnce(pageWithOneAudit());
+    renderAuditPage();
+
+    await screen.findAllByText('Ghi nhận thanh toán');
+    await userEvent.click(screen.getAllByRole('button', {
+      name: /Ghi nhận thanh toán/i,
+    })[0]);
+
+    const closeButton = screen.getByRole('button', { name: 'Đóng' });
+    expect(document.querySelector('.audit-page-content')).toHaveAttribute('inert');
+    expect(closeButton).toHaveFocus();
+
+    await userEvent.tab();
+    expect(closeButton).toHaveFocus();
+    await userEvent.tab({ shift: true });
+    expect(closeButton).toHaveFocus();
+  });
+
+  it('closes the desktop drawer when the viewport enters the mobile breakpoint', async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1366 });
+    try {
+      api.mockResolvedValueOnce(pageWithOneAudit());
+      renderAuditPage();
+
+      await screen.findAllByText('Ghi nhận thanh toán');
+      await userEvent.click(screen.getAllByRole('button', {
+        name: /Ghi nhận thanh toán/i,
+      })[0]);
+      expect(screen.getByRole('dialog', { name: 'Chi tiết nhật ký' })).toBeInTheDocument();
+
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 768 });
+      fireEvent(window, new Event('resize'));
+
+      expect(screen.queryByRole('dialog', { name: 'Chi tiết nhật ký' })).not.toBeInTheDocument();
+      expect(document.querySelector('.audit-page-content')).not.toHaveAttribute('inert');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+    }
+  });
+
+  it('closes the drawer as soon as a debounced text filter changes', async () => {
+    api.mockResolvedValueOnce(pageWithOneAudit());
+    renderAuditPage();
+
+    await screen.findAllByText('Ghi nhận thanh toán');
+    await userEvent.click(screen.getAllByRole('button', {
+      name: /Ghi nhận thanh toán/i,
+    })[0]);
+    expect(screen.getByRole('dialog', { name: 'Chi tiết nhật ký' })).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Email người thao tác'), {
+      target: { value: 'teacher@' },
+    });
+
+    expect(screen.queryByRole('dialog', { name: 'Chi tiết nhật ký' })).not.toBeInTheDocument();
+  });
+
   it('expands a mobile audit card and reuses safe snapshot details', async () => {
     api.mockResolvedValueOnce(pageWithOneAudit({
       items: [{

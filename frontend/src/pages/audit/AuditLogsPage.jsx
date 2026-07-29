@@ -64,6 +64,7 @@ export default function AuditLogsPage() {
   const requestId = useRef(0);
   const drawerCloseRef = useRef(null);
   const drawerTriggerRef = useRef(null);
+  const drawerRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -113,11 +114,36 @@ export default function AuditLogsPage() {
   useEffect(() => {
     if (!selectedRecord) return undefined;
     drawerCloseRef.current?.focus();
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') closeDrawer();
+    const handleDrawerKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        closeDrawer();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = drawerRef.current?.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !drawerRef.current.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
+    const closeAtMobileBreakpoint = () => {
+      if (window.innerWidth <= 768) setSelectedRecord(null);
+    };
+    document.addEventListener('keydown', handleDrawerKeyDown);
+    window.addEventListener('resize', closeAtMobileBreakpoint);
+    return () => {
+      document.removeEventListener('keydown', handleDrawerKeyDown);
+      window.removeEventListener('resize', closeAtMobileBreakpoint);
+    };
   }, [selectedRecord]);
 
   const totalPages = Math.max(1, Math.ceil(total / AUDIT_PAGE_SIZE));
@@ -127,6 +153,13 @@ export default function AuditLogsPage() {
     return (event) => {
       setter(event.target.value);
       setPage(1);
+      closeDetails();
+    };
+  }
+
+  function changeText(setter) {
+    return (event) => {
+      setter(event.target.value);
       closeDetails();
     };
   }
@@ -166,6 +199,7 @@ export default function AuditLogsPage() {
 
   return (
     <main className="audit-page">
+      <div className="audit-page-content" inert={selectedRecord ? '' : undefined}>
       <header className="page-head audit-page-head">
         <div>
           <h2>Nhật ký hoạt động</h2>
@@ -183,11 +217,11 @@ export default function AuditLogsPage() {
         </label>
         <label>
           Email người thao tác
-          <input type="search" value={actorEmail} onChange={(event) => setActorEmail(event.target.value)} />
+          <input type="search" value={actorEmail} onChange={changeText(setActorEmail)} />
         </label>
         <label>
           Từ khóa
-          <input type="search" value={keyword} onChange={(event) => setKeyword(event.target.value)} />
+          <input type="search" value={keyword} onChange={changeText(setKeyword)} />
         </label>
         <label>
           Hành động
@@ -302,10 +336,11 @@ export default function AuditLogsPage() {
         </nav>
       )}
 
+      </div>
       {selectedRecord && (
         <>
           <button className="audit-drawer-backdrop" type="button" aria-label="Đóng chi tiết nhật ký" onClick={closeDrawer} />
-          <aside className="audit-drawer" role="dialog" aria-modal="true" aria-labelledby="audit-drawer-title">
+          <aside ref={drawerRef} className="audit-drawer" role="dialog" aria-modal="true" aria-labelledby="audit-drawer-title">
             <header className="audit-drawer-header">
               <div>
                 <p className="muted">Bản ghi #{selectedRecord.id}</p>
