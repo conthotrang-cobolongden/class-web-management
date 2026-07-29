@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../../api.js';
-import { ROLE_LABELS, useAuth } from '../../auth.jsx';
 import { STATUS } from '../../charts/theme.js';
 import {
   ATTENDANCE_STATUS_LABELS,
@@ -9,6 +8,7 @@ import {
   fmtDateTime,
   fmtTime,
 } from '../../format.js';
+import { attendanceWindow } from '../../features/attendance/attendanceWindow.js';
 import './attendance.css';
 
 const STATUS_ORDER = ['present', 'absent', 'late', 'excused'];
@@ -21,7 +21,6 @@ const STATUS_VARS = {
   '--st-absent': STATUS.critical,
   '--st-excused': STATUS.neutral,
 };
-const LOCK_MS = 24 * 60 * 60 * 1000;
 
 function toISODate(d) {
   const p = (n) => String(n).padStart(2, '0');
@@ -52,16 +51,7 @@ function dowOf(iso) {
   return js === 0 ? 7 : js;
 }
 
-// Qua 24h ke tu gio bat dau buoi hoc? (tinh theo gio may — chi de canh bao truoc,
-// chot chan that la backend tra 403)
-function isLocked(session) {
-  if (!session) return false;
-  const start = new Date(`${session.session_date}T${String(session.start_time).slice(0, 5)}:00`);
-  return Date.now() - start.getTime() > LOCK_MS;
-}
-
 export default function AttendancePage() {
-  const { user: me } = useAuth();
   const today = toISODate(new Date());
 
   // Buoc 1: lop
@@ -78,6 +68,7 @@ export default function AttendancePage() {
 
   // Buoc 3: bang diem danh
   const [session, setSession] = useState(null);
+  const [editWindow, setEditWindow] = useState({ disabled: false, message: '' });
   const [rows, setRows] = useState([]);
   const [rosterLoading, setRosterLoading] = useState(false);
 
@@ -158,6 +149,7 @@ export default function AttendancePage() {
       const data = await api(`/sessions/${sessionId}/attendance`);
       if (reqId !== rosterReqRef.current) return;
       setSession(data.session);
+      setEditWindow(attendanceWindow(data));
       const nextRows = data.items.map((it) => ({ ...it, note: it.note || '' }));
       savedRowsRef.current = nextRows.map(({ student_id, status, note }) => ({ student_id, status, note }));
       setRows(nextRows);
@@ -193,6 +185,7 @@ export default function AttendancePage() {
     setClassId(id);
     setSessionId(null);
     setSession(null);
+    setEditWindow({ disabled: false, message: '' });
     setRows([]);
     setError('');
   }
@@ -227,6 +220,10 @@ export default function AttendancePage() {
   }
 
   async function handleSave() {
+    if (editWindow.disabled) {
+      setError(editWindow.message);
+      return;
+    }
     const items = rows
       .filter((r) => r.status)
       .map((r) => ({ student_id: r.student_id, status: r.status, note: r.note.trim() || null }));
@@ -253,7 +250,7 @@ export default function AttendancePage() {
   }
 
   const selectedClass = classes.find((c) => c.id === classId);
-  const locked = isLocked(session);
+  const locked = editWindow.disabled;
   const markedCount = rows.filter((r) => r.status).length;
 
   return (
@@ -390,17 +387,8 @@ export default function AttendancePage() {
             )}
           </h3>
 
-          {locked && me.role !== 'admin' && (
-            <div className="alert alert-warn">
-              Buổi học đã quá 24h kể từ giờ bắt đầu — chỉ {ROLE_LABELS.admin} được lưu/sửa điểm
-              danh. Hệ thống sẽ từ chối khi bạn bấm lưu.
-            </div>
-          )}
-          {locked && me.role === 'admin' && (
-            <div className="alert alert-warn">
-              Buổi học đã quá 24h — thao tác sửa điểm danh của {ROLE_LABELS.admin} sẽ được ghi
-              nhật ký hệ thống.
-            </div>
+          {locked && (
+            <div className="alert alert-warn">{editWindow.message}</div>
           )}
 
           {rosterLoading && (
@@ -420,7 +408,7 @@ export default function AttendancePage() {
                 <button
                   type="button"
                   className="btn btn-sm"
-                  disabled={submitting}
+                  disabled={submitting || locked}
                   onClick={markAllPresent}
                 >
                   Có mặt tất cả
@@ -444,7 +432,7 @@ export default function AttendancePage() {
                         <button
                           key={st}
                           type="button"
-                          disabled={submitting}
+                          disabled={submitting || locked}
                           aria-pressed={r.status === st}
                           className={`att-status ${r.status === st ? `on-${st}` : ''}`}
                           onClick={() => setStatus(r.student_id, st)}
@@ -458,7 +446,7 @@ export default function AttendancePage() {
                         value={r.note}
                         placeholder="Ghi chú…"
                         aria-label={`Ghi chú cho ${r.full_name}`}
-                        disabled={submitting}
+                        disabled={submitting || locked}
                         onChange={(e) => setNote(r.student_id, e.target.value)}
                       />
                     </div>
@@ -475,7 +463,7 @@ export default function AttendancePage() {
                 <button
                   type="button"
                   className="btn btn-primary"
-                  disabled={submitting}
+                  disabled={submitting || locked}
                   onClick={handleSave}
                 >
                   {submitting ? 'Đang lưu…' : 'Lưu điểm danh'}

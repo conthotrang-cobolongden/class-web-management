@@ -21,6 +21,9 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "student_code", length = 30, unique = true)
+    private String studentCode;
+
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
 
@@ -68,6 +71,14 @@ public class Student {
 
     public Long getId() {
         return id;
+    }
+
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
     public String getFullName() {

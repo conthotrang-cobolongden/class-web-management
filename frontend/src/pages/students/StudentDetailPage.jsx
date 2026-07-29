@@ -12,6 +12,7 @@ export default function StudentDetailPage() {
   const { user: me } = useAuth();
   const [student, setStudent] = useState(null);
   const [classes, setClasses] = useState([]);
+  const [transferTargets, setTransferTargets] = useState([]);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
@@ -101,6 +102,28 @@ export default function StudentDetailPage() {
     () => enrollments.find((e) => !e.left_at) || null,
     [enrollments],
   );
+  const isAssignedToCurrentClass = Boolean(
+    openEnrollment && classes.some((value) => value.id === openEnrollment.class_id),
+  );
+  const canTransfer = me.role === 'admin' || isAssignedToCurrentClass;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!openEnrollment || !canTransfer) {
+      setTransferTargets([]);
+      return undefined;
+    }
+    api(`/students/${id}/transfer-options`)
+      .then((data) => {
+        if (!cancelled) setTransferTargets(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, openEnrollment, canTransfer]);
 
   function openPanel(name) {
     setError('');
@@ -220,10 +243,6 @@ export default function StudentDetailPage() {
     }
   }
 
-  // Lop dich chuyen lop: active + khac lop hien tai
-  const transferTargets = classes.filter(
-    (c) => c.status === 'active' && (!openEnrollment || c.id !== openEnrollment.class_id),
-  );
   // Lop de gan HS chua co lop: active; GV chinh chi duoc lop minh lam GV chinh
   const enrollTargets = classes.filter(
     (c) => c.status === 'active' && (me.role === 'admin' || (c.main_teacher && c.main_teacher.id === me.id)),
@@ -257,22 +276,28 @@ export default function StudentDetailPage() {
             {STUDENT_STATUS_LABELS[student.status] || student.status}
           </span>
         </h2>
-        {canManage && (
+        {(canManage || canTransfer) && (
           <div className="row-gap">
-            <button type="button" className="btn" onClick={() => openPanel('edit')}>
-              Sửa hồ sơ
-            </button>
+            {canManage && (
+              <button type="button" className="btn" onClick={() => openPanel('edit')}>
+                Sửa hồ sơ
+              </button>
+            )}
             {openEnrollment && (
               <>
-                <button type="button" className="btn" onClick={() => openPanel('transfer')}>
-                  Chuyển lớp
-                </button>
-                <button type="button" className="btn" onClick={() => openPanel('fee')}>
-                  Phí ưu đãi
-                </button>
+                {canTransfer && (
+                  <button type="button" className="btn" onClick={() => openPanel('transfer')}>
+                    Chuyển lớp
+                  </button>
+                )}
+                {canManage && (
+                  <button type="button" className="btn" onClick={() => openPanel('fee')}>
+                    Phí ưu đãi
+                  </button>
+                )}
               </>
             )}
-            {!openEnrollment && (
+            {!openEnrollment && canManage && (
               <button type="button" className="btn" onClick={() => openPanel('enroll')}>
                 Gán vào lớp
               </button>
@@ -287,6 +312,10 @@ export default function StudentDetailPage() {
       <div className="card">
         <h3>Hồ sơ</h3>
         <div className="grid-2">
+          <div>
+            <div className="muted">Mã học sinh</div>
+            <div><strong>{student.student_code}</strong></div>
+          </div>
           <div>
             <div className="muted">Ngày sinh</div>
             <div>{fmtDate(student.dob)}</div>

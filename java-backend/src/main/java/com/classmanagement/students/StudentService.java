@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +37,8 @@ import java.util.Map;
 // Quan ly ho so hoc sinh + enrollment (FR-3) — quyen theo lop check qua ClassAccessService (NFR-2)
 @Service
 public class StudentService {
+    public record TransferClassOption(Long id, String name, String schoolYear) {
+    }
 
     public static final List<String> STATUSES = List.of("active", "paused", "left");
     public static final List<String> GENDERS = List.of("male", "female", "other");
@@ -104,6 +107,17 @@ public class StudentService {
             throw new ApiException(403, ClassAccessService.MANAGER_DENIED);
         }
         access.assertClassManager(me, current.getClassId());
+    }
+
+    // Chuyen lop: Admin hoac GV/TG duoc phan cong vao lop nguon.
+    private void assertStaffOfCurrentClass(User me, Enrollment current) {
+        if (ClassAccessService.isAdmin(me)) {
+            return;
+        }
+        if (current == null) {
+            throw new ApiException(403, ClassAccessService.STAFF_DENIED);
+        }
+        access.assertClassStaffOrAdmin(me, current.getClassId());
     }
 
     // GET /api/students — admin: tat ca; GV/TG: chi HS dang hoc cac lop minh (FR-3.3)
@@ -181,6 +195,8 @@ public class StudentService {
         }
         s.setNote(emptyToNull(req.note()));
         students.save(s);
+        s.setStudentCode(StudentCodes.fromId(s.getId()));
+        students.save(s);
 
         if (target != null) {
             Enrollment e = new Enrollment();
@@ -190,7 +206,16 @@ public class StudentService {
             e.setCustomMonthlyFee(req.customMonthlyFee());
             e.setCreatedBy(me.getId());
             enrollments.save(e);
+            Map<String, Object> enrollmentValues = new LinkedHashMap<>();
+            enrollmentValues.put("student_id", s.getId());
+            enrollmentValues.put("class_id", target.getId());
+            enrollmentValues.put("joined_at", e.getJoinedAt());
+            enrollmentValues.put("custom_monthly_fee", e.getCustomMonthlyFee());
+            auditService.audit("students", "enrollments", e.getId(), "create",
+                    "Xếp lớp cho " + s.getStudentCode(), null, enrollmentValues, me.getId());
         }
+        auditService.audit("students", "students", s.getId(), "create",
+                "Thêm học sinh " + s.getStudentCode(), null, studentSnapshot(s), me.getId());
         return StudentDto.from(s, target);
     }
 
@@ -229,6 +254,7 @@ public class StudentService {
         Enrollment current = enrollments.findByStudentIdAndLeftAtIsNull(id).orElse(null);
         assertManagerOfCurrentClass(me, current);
         Student s = findStudent(id);
+        Map<String, Object> oldValues = studentSnapshot(s);
 
         boolean changed = false;
         if (req.has("full_name")) {
@@ -283,6 +309,8 @@ public class StudentService {
             throw new ApiException(400, "Không có gì để cập nhật");
         }
         students.save(s);
+        auditService.audit("students", "students", s.getId(), "update",
+                "Cập nhật học sinh " + s.getStudentCode(), oldValues, studentSnapshot(s), me.getId());
 
         SchoolClass currentClass = current == null
                 ? null
@@ -290,12 +318,28 @@ public class StudentService {
         return StudentDto.from(s, currentClass);
     }
 
+    public List<TransferClassOption> transferOptions(User me, Long id) {
+        findStudent(id);
+        Enrollment current = enrollments.findByStudentIdAndLeftAtIsNull(id).orElse(null);
+        assertStaffOfCurrentClass(me, current);
+        if (current == null) {
+            throw new ApiException(400, "Học sinh chưa có lớp đang học");
+        }
+        Long sourceClassId = current.getClassId();
+        return classes.findByStatus("active").stream()
+                .filter(value -> !sourceClassId.equals(value.getId()))
+                .sorted(Comparator.comparing(SchoolClass::getName).thenComparing(SchoolClass::getId))
+                .map(value -> new TransferClassOption(
+                        value.getId(), value.getName(), value.getSchoolYear()))
+                .toList();
+    }
+
     // POST /api/students/{id}/transfer — dong enrollment cu + mo enrollment moi (FR-3.4)
     @Transactional
     public void transfer(User me, Long id, TransferRequest req) {
         Enrollment current = enrollments.findByStudentIdAndLeftAtIsNull(id).orElse(null);
-        assertManagerOfCurrentClass(me, current);
-        findStudent(id);
+        assertStaffOfCurrentClass(me, current);
+        Student student = findStudent(id);
         if (current == null) {
             throw new ApiException(400, "Học sinh chưa có lớp đang học");
         }
@@ -339,7 +383,8 @@ public class StudentService {
         newValues.put("leave_reason", "transferred");
         newValues.put("transferred_to_class_id", target.getId());
         newValues.put("new_enrollment_id", next.getId());
-        auditService.audit("enrollments", current.getId(), "update", oldValues, newValues, me.getId());
+        auditService.audit("students", "enrollments", current.getId(), "update",
+                "Chuyển lớp " + student.getStudentCode(), oldValues, newValues, me.getId());
     }
 
     // POST /api/students/{id}/enroll — gan HS chua co lop vao lop (admin hoac GV chinh lop dich)
@@ -348,7 +393,7 @@ public class StudentService {
         access.assertClassManager(me, req.classId());
         assertFeeNotNegative(req.customMonthlyFee());
         findClass(req.classId());
-        findStudent(id);
+        Student student = findStudent(id);
         if (enrollments.existsByStudentIdAndLeftAtIsNull(id)) {
             throw new ApiException(400, "Học sinh đang có lớp, hãy dùng chức năng chuyển lớp");
         }
@@ -359,6 +404,12 @@ public class StudentService {
         e.setCustomMonthlyFee(req.customMonthlyFee());
         e.setCreatedBy(me.getId());
         enrollments.save(e);
+        auditService.audit("students", "enrollments", e.getId(), "create",
+                "Xếp lớp cho " + student.getStudentCode(), null,
+                Map.of("student_id", id, "class_id", req.classId(), "joined_at", req.joinedAt(),
+                        "custom_monthly_fee", req.customMonthlyFee() == null
+                                ? "Mặc định lớp" : req.customMonthlyFee()),
+                me.getId());
     }
 
     // PUT /api/students/{id}/custom-fee — phi rieng tren enrollment dang mo (FR-6.1)
@@ -366,15 +417,36 @@ public class StudentService {
     public void updateCustomFee(User me, Long id, Map<String, Object> body) {
         Enrollment current = enrollments.findByStudentIdAndLeftAtIsNull(id).orElse(null);
         assertManagerOfCurrentClass(me, current);
-        findStudent(id);
+        Student student = findStudent(id);
         if (current == null) {
             throw new ApiException(400, "Học sinh chưa có lớp đang học");
         }
         if (!body.containsKey("custom_monthly_fee")) {
             throw new ApiException(400, "Thiếu trường bắt buộc: custom_monthly_fee");
         }
+        BigDecimal oldFee = current.getCustomMonthlyFee();
         current.setCustomMonthlyFee(parseFee(body.get("custom_monthly_fee")));
         enrollments.save(current);
+        auditService.audit("students", "enrollments", current.getId(), "update",
+                "Cập nhật học phí riêng của " + student.getStudentCode(),
+                Map.of("custom_monthly_fee", oldFee == null ? "Mặc định lớp" : oldFee),
+                Map.of("custom_monthly_fee", current.getCustomMonthlyFee() == null
+                        ? "Mặc định lớp" : current.getCustomMonthlyFee()), me.getId());
+    }
+
+    private static Map<String, Object> studentSnapshot(Student student) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        values.put("student_code", student.getStudentCode());
+        values.put("full_name", student.getFullName());
+        values.put("dob", student.getDob());
+        values.put("gender", student.getGender());
+        values.put("school_name", student.getSchoolName());
+        values.put("parent_name", student.getParentName());
+        values.put("parent_phone", student.getParentPhone());
+        values.put("enrollment_date", student.getEnrollmentDate());
+        values.put("status", student.getStatus());
+        values.put("note", student.getNote());
+        return values;
     }
 
     // null = quay ve phi mac dinh cua lop

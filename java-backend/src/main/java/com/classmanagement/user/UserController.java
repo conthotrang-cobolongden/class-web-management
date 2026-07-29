@@ -45,8 +45,9 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@Valid @RequestBody CreateUserRequest req) {
-        return new UserResponse(userService.create(req));
+    public UserResponse create(@Valid @RequestBody CreateUserRequest req,
+                               @AuthenticationPrincipal User me) {
+        return new UserResponse(userService.create(req, me.getId()));
     }
 
     @PutMapping("/{id}")
@@ -62,8 +63,8 @@ public class UserController {
     }
 
     @PostMapping("/{id}/activate")
-    public MessageResponse activate(@PathVariable Long id) {
-        userService.activate(id);
+    public MessageResponse activate(@PathVariable Long id, @AuthenticationPrincipal User me) {
+        userService.activate(id, me.getId());
         return new MessageResponse("Đã kích hoạt lại tài khoản");
     }
 }

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.List;
 
 // FR-3: ho so hoc sinh — moi user dang nhap deu vao duoc, quyen theo lop chan trong service (NFR-2)
 @RestController
@@ -63,6 +64,12 @@ public class StudentController {
     @GetMapping("/{id}")
     public StudentDetailResponse detail(@PathVariable Long id, @AuthenticationPrincipal User me) {
         return new StudentDetailResponse(studentService.detail(me, id));
+    }
+
+    @GetMapping("/{id}/transfer-options")
+    public List<StudentService.TransferClassOption> transferOptions(
+            @PathVariable Long id, @AuthenticationPrincipal User me) {
+        return studentService.transferOptions(me, id);
     }
 
     @PutMapping("/{id}")

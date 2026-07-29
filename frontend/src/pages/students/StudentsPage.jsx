@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../api.js';
 import { useAuth } from '../../auth.jsx';
 import { STUDENT_STATUS_LABELS, fmtDate } from '../../format.js';
+import StudentImportPanel from './StudentImportPanel.jsx';
 
 const PAGE_SIZE = 20;
 
@@ -47,6 +48,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(false);
 
   const [showCreate, setShowCreate] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [createForm, setCreateForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const reqIdRef = useRef(0);
@@ -160,18 +162,44 @@ export default function StudentsPage() {
     <div>
       <div className="page-head">
         <h2>Học sinh ({total})</h2>
-        {canCreate && (
+        <div className="row-gap">
           <button
             type="button"
-            className="btn btn-primary"
-            onClick={() => setShowCreate((v) => !v)}
+            className="btn"
+            onClick={() => {
+              setShowImport((value) => !value);
+              setShowCreate(false);
+            }}
           >
-            {showCreate ? 'Đóng form' : '+ Thêm học sinh'}
+            {showImport ? 'Đóng nhập Excel' : 'Nhập từ Excel'}
           </button>
-        )}
+          {canCreate && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                setShowCreate((value) => !value);
+                setShowImport(false);
+              }}
+            >
+              {showCreate ? 'Đóng form' : '+ Thêm học sinh'}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <div className="alert">{error}</div>}
+      {showImport && (
+        <StudentImportPanel
+          classes={classes}
+          onImported={(data) => {
+            flash(`Đã nhập ${data.imported} học sinh`);
+            load();
+          }}
+          onNotice={flash}
+        />
+      )}
+
       {notice && <div className="alert alert-ok">{notice}</div>}
 
       {showCreate && canCreate && (
@@ -287,7 +315,7 @@ export default function StudentsPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Tìm theo tên học sinh…"
+          placeholder="Tìm theo tên hoặc mã học sinh…"
         />
         <select
           value={classFilter}
@@ -320,6 +348,7 @@ export default function StudentsPage() {
           <thead>
             <tr>
               <th>Họ tên</th>
+              <th>Mã HS</th>
               <th>Ngày sinh</th>
               <th>Lớp hiện tại</th>
               <th>SĐT phụ huynh</th>
@@ -329,18 +358,21 @@ export default function StudentsPage() {
           <tbody>
             {loading && [1, 2, 3].map((i) => (
               <tr key={`sk-${i}`}>
-                <td colSpan={5}>
+                <td colSpan={6}>
                   <div className="skeleton" style={{ height: 18, width: `${95 - i * 18}%` }} />
                 </td>
               </tr>
             ))}
             {!loading && items.length === 0 && (
-              <tr><td colSpan={5} className="muted">Không có học sinh nào</td></tr>
+              <tr><td colSpan={6} className="muted">Không có học sinh nào</td></tr>
             )}
             {!loading && items.map((s) => (
               <tr key={s.id} className={s.status === 'left' ? 'row-inactive' : ''}>
                 <td className="td-title">
                   <Link to={`/students/${s.id}`}>{s.full_name}</Link>
+                </td>
+                <td data-label="Mã HS">
+                  <span className="badge badge-info">{s.student_code}</span>
                 </td>
                 <td data-label="Ngày sinh">{fmtDate(s.dob)}</td>
                 <td data-label="Lớp hiện tại">{s.current_class ? s.current_class.name : '—'}</td>

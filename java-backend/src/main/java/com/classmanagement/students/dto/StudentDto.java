@@ -6,7 +6,7 @@ import com.classmanagement.domain.Student;
 import java.time.LocalDate;
 
 // Item danh sach hoc sinh (GET /api/students) — kem lop dang hoc current_class (FR-3.3)
-public record StudentDto(Long id, String fullName, LocalDate dob, String gender,
+public record StudentDto(Long id, String studentCode, String fullName, LocalDate dob, String gender,
                          String schoolName, String parentName, String parentPhone,
                          LocalDate enrollmentDate, String status, String note,
                          CurrentClass currentClass) {
@@ -20,7 +20,7 @@ public record StudentDto(Long id, String fullName, LocalDate dob, String gender,
     }
 
     public static StudentDto from(Student s, SchoolClass currentClass) {
-        return new StudentDto(s.getId(), s.getFullName(), s.getDob(), s.getGender(),
+        return new StudentDto(s.getId(), s.getStudentCode(), s.getFullName(), s.getDob(), s.getGender(),
                 s.getSchoolName(), s.getParentName(), s.getParentPhone(),
                 s.getEnrollmentDate(), s.getStatus(), s.getNote(),
                 CurrentClass.from(currentClass));
