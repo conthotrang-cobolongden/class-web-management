@@ -1,10 +1,14 @@
 package com.classmanagement.domain;
 
+import com.classmanagement.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
@@ -44,13 +48,19 @@ public class AuditLog {
 
     @Column(name = "user_id")
     private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User actor;
+
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     @PrePersist
     void onCreate() {
-        createdAt = Instant.now();
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 
     public Long getId() {
@@ -121,6 +131,9 @@ public class AuditLog {
         this.userId = userId;
     }
 
+    public User getActor() {
+        return actor;
+    }
     public Instant getCreatedAt() {
         return createdAt;
     }
