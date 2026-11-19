@@ -21,20 +21,20 @@ class AttendanceEditPolicyTest {
     private static final Instant END = Instant.parse("2026-07-28T13:00:00Z");
 
     @Test
-    void assistantWindowIsInclusiveFromThirtyMinutesBeforeStartThroughThirtyMinutesAfterEnd() {
-        AttendanceEditDecision opening = evaluate("2026-07-28T10:30:00Z", "assistant", "scheduled");
-        AttendanceEditDecision closing = evaluate("2026-07-28T13:30:00Z", "assistant", "scheduled");
+    void assistantWindowIsInclusiveFromFifteenMinutesBeforeStartThroughFifteenMinutesAfterEnd() {
+        AttendanceEditDecision opening = evaluate("2026-07-28T10:45:00Z", "assistant", "scheduled");
+        AttendanceEditDecision closing = evaluate("2026-07-28T13:15:00Z", "assistant", "scheduled");
 
         assertTrue(opening.allowed());
         assertTrue(closing.allowed());
-        assertEquals(START.minusSeconds(30 * 60), opening.opensAt());
-        assertEquals(END.plusSeconds(30 * 60), opening.closesAt());
+        assertEquals(START.minusSeconds(15 * 60), opening.opensAt());
+        assertEquals(END.plusSeconds(15 * 60), opening.closesAt());
     }
 
     @Test
     void assistantCannotEditOutsideWindow() {
-        assertFalse(evaluate("2026-07-28T10:29:59Z", "assistant", "scheduled").allowed());
-        assertFalse(evaluate("2026-07-28T13:30:01Z", "assistant", "scheduled").allowed());
+        assertFalse(evaluate("2026-07-28T10:44:59Z", "assistant", "scheduled").allowed());
+        assertFalse(evaluate("2026-07-28T13:15:01Z", "assistant", "scheduled").allowed());
     }
 
     @Test

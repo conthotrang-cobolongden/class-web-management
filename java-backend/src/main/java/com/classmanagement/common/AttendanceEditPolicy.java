@@ -11,7 +11,7 @@ import java.time.Instant;
 @Component
 public class AttendanceEditPolicy {
 
-    private static final Duration ASSISTANT_MARGIN = Duration.ofMinutes(30);
+    private static final Duration ASSISTANT_MARGIN = Duration.ofMinutes(15);
     private static final Duration TEACHER_WINDOW = Duration.ofHours(24);
 
     private final Clock clock;

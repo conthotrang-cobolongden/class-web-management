@@ -35,6 +35,34 @@ export class ApiError extends Error {
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    if (method !== 'GET') {
+      throw new ApiError(400, 'Đây là bản demo, dữ liệu không được lưu.');
+    }
+
+    if (path.startsWith('/reports/dashboard')) {
+      return {
+        active_students: 120,
+        classes_by_grade: { 6: 2, 7: 3, 8: 2, 9: 2 },
+        new_students_this_month: 12,
+        left_students: 3,
+        unpaid_fees_this_month: 8,
+      };
+    }
+
+    if (path.startsWith('/reports/revenue')) {
+      return {
+        grand_total_due: 45000000,
+        grand_total_paid: 38000000,
+        items: [],
+      };
+    }
+
+    if (path.startsWith('/sessions/week')) return [];
+
+    throw new ApiError(400, 'Trang này chưa có dữ liệu demo.');
+  }
+
   const headers = {};
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const token = getToken();
