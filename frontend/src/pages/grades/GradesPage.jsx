@@ -212,6 +212,10 @@ export default function GradesPage() {
 
   async function handleExport() {
     setError('');
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      setError('Tải file không được hỗ trợ trong bản demo.');
+      return;
+    }
     setExporting(true);
     try {
       let res;

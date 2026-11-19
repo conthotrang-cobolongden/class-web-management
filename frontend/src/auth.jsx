@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { api, clearSession, getSavedUser, getToken, saveSession } from './api.js';
 
 const AuthContext = createContext(null);
+const DEMO_USER = { id: 1, full_name: 'Quản trị demo', email: 'demo@example.com', role: 'admin' };
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 export const ROLE_LABELS = {
   admin: 'Quản trị',
@@ -10,11 +12,12 @@ export const ROLE_LABELS = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getSavedUser);
+  const [user, setUser] = useState(() => DEMO_MODE ? DEMO_USER : getSavedUser());
 
   // Xac thuc lai phien khi mo app: token chet/tai khoan bi khoa -> api() tu clear + ve /login;
   // role/ten bi doi phia server -> dong bo lai (khong tin localStorage vinh vien)
   useEffect(() => {
+    if (DEMO_MODE) return;
     if (!getToken()) return;
     api('/auth/me')
       .then((data) => {
@@ -34,6 +37,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
+    if (DEMO_MODE) return;
     clearSession();
     setUser(null);
   }

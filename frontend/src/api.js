@@ -1,4 +1,5 @@
 // Goi API backend (contract: JSON snake_case, loi dang {error: "..."} tieng Viet)
+import { demoApi } from './demo-data.js';
 
 const TOKEN_KEY = 'cm_token';
 const USER_KEY = 'cm_user';
@@ -35,6 +36,10 @@ export class ApiError extends Error {
 }
 
 export async function api(path, { method = 'GET', body } = {}) {
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    if (method !== 'GET') throw new ApiError(400, 'Đây là bản demo, dữ liệu không được lưu.');
+    return demoApi(path);
+  }
   const headers = {};
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const token = getToken();
@@ -90,6 +95,9 @@ function responseFilename(response, fallback) {
 }
 
 export async function downloadApiFile(path) {
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    throw new ApiError(400, 'Tải file không được hỗ trợ trong bản demo.');
+  }
   const token = getToken();
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;

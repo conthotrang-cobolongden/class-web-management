@@ -1,0 +1,6 @@
+{
+  "buildCommand": "VITE_DEMO_MODE=true npm run build -- --base=/",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -86,6 +86,9 @@ export default function Layout() {
       </header>
 
       <main className="content">
+        {import.meta.env.VITE_DEMO_MODE === 'true' && (
+          <div className="alert" role="status">Bản xem thử · Dữ liệu minh họa, các thay đổi không được lưu.</div>
+        )}
         <Outlet />
       </main>
 
