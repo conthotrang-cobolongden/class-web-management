@@ -60,6 +60,7 @@ export default function FeesPage() {
   // Form ghi nhan dong tien / dieu chinh
   const [paymentForm, setPaymentForm] = useState(null); // {fee, amount, method, paid_at, note}
   const [adjustForm, setAdjustForm] = useState(null); // {fee, adjusted_amount, adjustment_reason}
+  const [showFeeTotals, setShowFeeTotals] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [generating, setGenerating] = useState(false);
 
@@ -447,19 +448,38 @@ export default function FeesPage() {
           ) : (
             <div className="stat-grid fee-stats">
               <div className="card">
-                <div className="stat-label">Tổng phải thu</div>
-                <div className={statNumCls}>{fmtMoney(feeSummary.due)}</div>
-                <div className="stat-sub">{items.length} khoản · trang hiện tại</div>
+                <div className="fee-card-head">
+                  <div className="stat-label">Tổng phải thu</div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm fee-toggle-btn"
+                    onClick={() => setShowFeeTotals((show) => !show)}
+                  >
+                    {showFeeTotals ? 'Ẩn số' : 'Hiện số'}
+                  </button>
+                </div>
+                <div className={statNumCls}>
+                  {showFeeTotals ? fmtMoney(feeSummary.due) : '***'}
+                </div>
+                <div className="stat-sub">
+                  {showFeeTotals ? `${items.length} khoản · trang hiện tại` : 'Nhấn Hiện số để xem giá trị'}
+                </div>
               </div>
               <div className="card">
                 <div className="stat-label">Đã thu</div>
-                <div className={statNumCls}>{fmtMoney(feeSummary.paid)}</div>
-                <div className="stat-sub">{feeSummary.paidPct}% tổng phải thu</div>
+                <div className={statNumCls}>
+                  {showFeeTotals ? fmtMoney(feeSummary.paid) : '***'}
+                </div>
+                <div className="stat-sub">
+                  {showFeeTotals ? `${feeSummary.paidPct}% tổng phải thu` : 'Ẩn theo tổng'}
+                </div>
               </div>
               <div className="card">
                 <div className="stat-label">Còn thiếu</div>
-                <div className={statNumCls}>{fmtMoney(feeSummary.left)}</div>
-                <div className="stat-sub">{feeSummary.owingCount} khoản chưa đóng đủ</div>
+                <div className={statNumCls}>
+                  {showFeeTotals ? fmtMoney(feeSummary.left) : '***'}
+                </div>
+                <div className="stat-sub">{showFeeTotals ? `${feeSummary.owingCount} khoản chưa đóng đủ` : 'Ẩn theo tổng'}</div>
               </div>
             </div>
           )}
