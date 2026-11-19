@@ -18,6 +18,8 @@
 .stat-grid.fee-stats { grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
 .fee-stats .card { padding: 12px 14px; }
 .fee-stats .stat-num { font-size: 20px; font-variant-numeric: tabular-nums; }
+.fee-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.fee-toggle-btn { padding: 4px 10px; font-size: 12px; min-height: 30px; }
 
 @media (max-width: 768px) {
   /* Mobile: moi o thanh 1 hang ngang gon (nhan trai — so phai), khong bao gio tran chu */
@@ -26,9 +28,11 @@
     display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
     padding: 10px 14px;
   }
+  .fee-card-head { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .fee-stats .stat-label { margin-bottom: 0; flex-shrink: 0; }
   .fee-stats .stat-num { font-size: 17px; }
   .fee-stats .stat-sub { display: none; }
+  .fee-toggle-btn { padding: 4px 10px; font-size: 12px; min-height: 30px; }
 
   /* Form trong bottom-sheet: nut bam keo het chieu ngang cho de cham */
   .fee-sheet-form .row-gap .btn { flex: 1; }

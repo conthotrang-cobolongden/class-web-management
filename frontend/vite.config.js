@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 // khong dinh CORS, deploy that chi can dat reverse proxy tuong tu.
 export default defineConfig({
   plugins: [react()],
-  base: '/class-web-management/',
+  base: process.env.VERCEL ? '/' : '/class-web-management/',
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',

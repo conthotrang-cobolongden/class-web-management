@@ -10,11 +10,22 @@ export const ROLE_LABELS = {
 };
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(getSavedUser);
+  const [user, setUser] = useState(() => {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      return {
+        id: 1,
+        full_name: 'Quản trị demo',
+        email: 'demo@example.com',
+        role: 'admin',
+      };
+    }
+    return getSavedUser();
+  });
 
   // Xac thuc lai phien khi mo app: token chet/tai khoan bi khoa -> api() tu clear + ve /login;
   // role/ten bi doi phia server -> dong bo lai (khong tin localStorage vinh vien)
   useEffect(() => {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') return;
     if (!getToken()) return;
     api('/auth/me')
       .then((data) => {
